@@ -4,15 +4,18 @@ import com.amf.report.dto.LoyaltyEarnDto;
 import com.amf.report.dto.LoyaltyEarnResponseDto;
 import com.amf.report.entity.LoyaltyEarnRecord;
 import com.amf.report.repository.LoyaltyEarnRecordRepository;
-import com.amf.report.service.LoyaltyEarnHttpService;
+import com.amf.report.service.HttpService;
 import com.amf.report.service.LoyaltyEarnService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,14 +25,25 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
 
+    private static final ParameterizedTypeReference<List<LoyaltyEarnDto>> LOYALTY_EARN_LIST =
+            new ParameterizedTypeReference<>() {};
+
     private final LoyaltyEarnRecordRepository loyaltyEarnRecordRepository;
-    private final LoyaltyEarnHttpService loyaltyEarnHttpService;
+    private final HttpService httpService;
     private final ModelMapper modelMapper;
+
+    @Value("${loyalty.api.loyalty-earn-url}")
+    private String loyaltyEarnUrl;
 
     @Override
     @Transactional
     public List<LoyaltyEarnResponseDto> syncLoyaltyEarnsFromApi() {
-        List<LoyaltyEarnRecord> records = loyaltyEarnHttpService.getAllLoyaltyEarns().stream()
+        List<LoyaltyEarnDto> loyaltyEarns = Optional
+                .ofNullable(httpService.get(loyaltyEarnUrl, LOYALTY_EARN_LIST))
+                .orElse(Collections.emptyList());
+        log.info("loyaltyEarn API returned {} record(s)", loyaltyEarns.size());
+
+        List<LoyaltyEarnRecord> records = loyaltyEarns.stream()
                 .filter(Objects::nonNull)
                 .map(this::toEntity)
                 .toList();

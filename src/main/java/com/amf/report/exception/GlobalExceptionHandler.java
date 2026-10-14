@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(LoyaltyEarnApiException.class)
-    public ProblemDetail handleLoyaltyEarnApi(LoyaltyEarnApiException ex) {
-        log.error("loyaltyEarn API call failed", ex);
+    @ExceptionHandler(HttpServiceException.class)
+    public ProblemDetail handleHttpServiceException(HttpServiceException ex) {
+        log.error("Outbound HTTP call failed", ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.getMessage());
     }
 }
