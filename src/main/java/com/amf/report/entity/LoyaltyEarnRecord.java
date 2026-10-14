@@ -36,6 +36,22 @@ public class LoyaltyEarnRecord {
     @Column(name = "earning_type", length = 20)
     private String earningType;
 
+    /** loyaltyRule.policyName, looked up by PolicyId */
+    @Column(name = "policy_name")
+    private String policyName;
+
+    /** loyaltyProgramMember.name, looked up by loyaltyProgramMember.id */
+    @Column(name = "organization_name")
+    private String organizationName;
+
+    /** loyaltyProgramMember characteristic value (CIDN) */
+    @Column(name = "cidn", length = 50)
+    private String cidn;
+
+    /** Sum of UpfrontBalanceTotal + EarningBalanceTotal + ManualCreditBalanceTotal */
+    @Column(name = "total_balance", precision = 19, scale = 6)
+    private BigDecimal totalBalance;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -23,4 +23,15 @@ public final class AppConstants {
 
     /** Only these earning types are saved; others (e.g. ManualCredit) are skipped. */
     public static final Set<String> ALLOWED_EARNING_TYPES = Set.of(EARNING_TYPE_MONTHLY, EARNING_TYPE_UPFRONT);
+
+    // ---- loyaltyProgramMember characteristic holding the CIDN ----
+    public static final String CHARACTERISTIC_CIDN = "CIDN";
+
+    // ---- loyaltyAccountBalance types summed into the total balance ----
+    public static final String BALANCE_TYPE_UPFRONT_TOTAL = "UpfrontBalanceTotal";
+    public static final String BALANCE_TYPE_EARNING_TOTAL = "EarningBalanceTotal";
+    public static final String BALANCE_TYPE_MANUAL_CREDIT_TOTAL = "ManualCreditBalanceTotal";
+
+    public static final Set<String> TOTAL_BALANCE_TYPES = Set.of(
+            BALANCE_TYPE_UPFRONT_TOTAL, BALANCE_TYPE_EARNING_TOTAL, BALANCE_TYPE_MANUAL_CREDIT_TOTAL);
 }

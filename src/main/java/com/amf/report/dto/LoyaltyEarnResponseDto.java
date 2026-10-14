@@ -19,5 +19,9 @@ public class LoyaltyEarnResponseDto {
     private String policyId;
     private String loyaltyProgramMember;
     private String earningType;
+    private String policyName;
+    private String organizationName;
+    private String cidn;
+    private BigDecimal totalBalance;
     private LocalDateTime createdAt;
 }

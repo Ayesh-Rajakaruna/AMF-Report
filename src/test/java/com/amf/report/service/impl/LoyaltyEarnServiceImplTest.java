@@ -1,7 +1,10 @@
 package com.amf.report.service.impl;
 
 import com.amf.report.dto.LoyaltyEarnDto;
-import com.amf.report.dto.LoyaltyEarnDto.CharacteristicDto;
+import com.amf.report.dto.CharacteristicDto;
+import com.amf.report.dto.LoyaltyAccountBalanceDto;
+import com.amf.report.dto.LoyaltyRuleDto;
+import com.amf.report.dto.ProgramMemberDto;
 import com.amf.report.dto.LoyaltyEarnResponseDto;
 import com.amf.report.entity.LoyaltyEarnRecord;
 import com.amf.report.repository.LoyaltyEarnRecordRepository;
@@ -34,6 +37,9 @@ import static org.mockito.Mockito.when;
 class LoyaltyEarnServiceImplTest {
 
     private static final String LOYALTY_EARN_URL = "https://example.test/loyaltyEarn";
+    private static final String LOYALTY_RULE_URL = "https://example.test/loyaltyRule";
+    private static final String PROGRAM_MEMBER_URL = "https://example.test/loyaltyProgramMember";
+    private static final String ACCOUNT_BALANCE_URL = "https://example.test/loyaltyAccountBalance";
 
     @Mock
     private LoyaltyEarnRecordRepository repository;
@@ -50,11 +56,25 @@ class LoyaltyEarnServiceImplTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(service, "loyaltyEarnUrl", LOYALTY_EARN_URL);
+        ReflectionTestUtils.setField(service, "loyaltyRuleUrl", LOYALTY_RULE_URL);
+        ReflectionTestUtils.setField(service, "loyaltyProgramMemberUrl", PROGRAM_MEMBER_URL);
+        ReflectionTestUtils.setField(service, "loyaltyAccountBalanceUrl", ACCOUNT_BALANCE_URL);
     }
 
     private void apiReturns(List<LoyaltyEarnDto> loyaltyEarns) {
-        when(httpService.get(eq(LOYALTY_EARN_URL), any(ParameterizedTypeReference.class)))
-                .thenReturn(loyaltyEarns);
+        stubGet(LOYALTY_EARN_URL, loyaltyEarns);
+    }
+
+    private void stubGet(String url, Object body) {
+        when(httpService.get(eq(url), any(ParameterizedTypeReference.class))).thenReturn(body);
+    }
+
+    private static LoyaltyAccountBalanceDto balance(String type, String accountId, String accountName, String value) {
+        return LoyaltyAccountBalanceDto.builder()
+                .balanceType(type)
+                .relatedAccount(new LoyaltyAccountBalanceDto.RelatedAccountDto(accountId, accountName))
+                .amount(new LoyaltyAccountBalanceDto.AmountDto(new BigDecimal(value)))
+                .build();
     }
 
     private void saveAllReturnsInput() {
@@ -164,5 +184,77 @@ class LoyaltyEarnServiceImplTest {
         saveAllReturnsInput();
 
         assertThat(service.syncLoyaltyEarnsFromApi()).isEmpty();
+    }
+
+    @Test
+    void sync_enrichesWithPolicyNameMemberAndTotalBalance() {
+        apiReturns(List.of(loyaltyEarn("10", "Monthly", "POL-1", "LPM-1")));
+        stubGet(LOYALTY_RULE_URL, List.of(
+                LoyaltyRuleDto.builder().id("POL-1").policyName("Gold Policy").build(),
+                LoyaltyRuleDto.builder().id("POL-2").policyName("Other").build()));
+        stubGet(PROGRAM_MEMBER_URL, List.of(ProgramMemberDto.builder()
+                .id("LPM-1").name("Acme Pty Ltd")
+                .characteristic(List.of(new CharacteristicDto("CIDN", "6781234778")))
+                .build()));
+        stubGet(ACCOUNT_BALANCE_URL, List.of(
+                balance("UpfrontBalanceTotal", "LPM-1", "6781234778", "6402.11"),
+                balance("EarningBalanceTotal", "LPM-1", "6781234778", "65344.81"),
+                balance("ManualCreditBalanceTotal", "LPM-1", "6781234778", "82923.235"),
+                balance("SomeOtherBalance", "LPM-1", "6781234778", "999"),
+                balance("UpfrontBalanceTotal", "LPM-OTHER", "1111111111", "5")));
+        saveAllReturnsInput();
+
+        service.syncLoyaltyEarnsFromApi();
+
+        LoyaltyEarnRecord saved = captureSaved().get(0);
+        assertThat(saved.getPolicyName()).isEqualTo("Gold Policy");
+        assertThat(saved.getOrganizationName()).isEqualTo("Acme Pty Ltd");
+        assertThat(saved.getCidn()).isEqualTo("6781234778");
+        assertThat(saved.getTotalBalance()).isEqualByComparingTo("154670.155");
+    }
+
+    @Test
+    void sync_memberWithoutCidnCharacteristic_usesFirstCharacteristicValue() {
+        apiReturns(List.of(loyaltyEarn("10", "Upfront", "POL-1", "LPM-1")));
+        stubGet(PROGRAM_MEMBER_URL, List.of(ProgramMemberDto.builder()
+                .id("LPM-1").name("Acme")
+                .characteristic(List.of(new CharacteristicDto("AccountNumber", "5550001111")))
+                .build()));
+        saveAllReturnsInput();
+
+        service.syncLoyaltyEarnsFromApi();
+
+        assertThat(captureSaved().get(0).getCidn()).isEqualTo("5550001111");
+    }
+
+    @Test
+    void sync_totalBalanceMatchedByCidnWhenAccountIdDiffers() {
+        apiReturns(List.of(loyaltyEarn("10", "Upfront", "POL-1", "LPM-1")));
+        stubGet(PROGRAM_MEMBER_URL, List.of(ProgramMemberDto.builder()
+                .id("LPM-1").name("Acme")
+                .characteristic(List.of(new CharacteristicDto("CIDN", "6781234778")))
+                .build()));
+        stubGet(ACCOUNT_BALANCE_URL, List.of(
+                balance("UpfrontBalanceTotal", "ACC-9", "6781234778", "100"),
+                balance("EarningBalanceTotal", "ACC-9", "6781234778", "50.5")));
+        saveAllReturnsInput();
+
+        service.syncLoyaltyEarnsFromApi();
+
+        assertThat(captureSaved().get(0).getTotalBalance()).isEqualByComparingTo("150.5");
+    }
+
+    @Test
+    void sync_noLookupData_leavesEnrichedColumnsNull() {
+        apiReturns(List.of(loyaltyEarn("10", "Monthly", "POL-1", "LPM-1")));
+        saveAllReturnsInput();
+
+        service.syncLoyaltyEarnsFromApi();
+
+        LoyaltyEarnRecord saved = captureSaved().get(0);
+        assertThat(saved.getPolicyName()).isNull();
+        assertThat(saved.getOrganizationName()).isNull();
+        assertThat(saved.getCidn()).isNull();
+        assertThat(saved.getTotalBalance()).isNull();
     }
 }
