@@ -1,5 +1,6 @@
 package com.amf.report.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +10,10 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * Incoming loyaltyEarn payload, e.g.
+ * TMF LoyaltyEarn resource (only the fields this service uses), e.g.
  * <pre>
  * {
+ *   "id": "LE-1",
  *   "quantity": { "value": 25.50 },
  *   "policyId": "POL-1001",
  *   "loyaltyProgramMember": { "id": "LPM-2001" }
@@ -22,7 +24,10 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LoyaltyEarnRequestDto {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class LoyaltyEarnDto {
+
+    private String id;
 
     @Valid
     private QuantityDto quantity;
@@ -35,6 +40,7 @@ public class LoyaltyEarnRequestDto {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class QuantityDto {
         private BigDecimal value;
     }
@@ -42,6 +48,7 @@ public class LoyaltyEarnRequestDto {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LoyaltyProgramMemberDto {
         private String id;
     }

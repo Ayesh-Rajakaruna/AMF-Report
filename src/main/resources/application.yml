@@ -16,3 +16,26 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+# ---- loyaltyEarn TMF API ----
+loyalty:
+  api:
+    loyalty-earn-url: ${LOYALTY_EARN_URL:https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyEarn}
+
+# ---- Outbound HTTP (RestTemplate) ----
+http:
+  connect-timeout-ms: 10000
+  read-timeout-ms: 30000
+  proxy:
+    enabled: ${HTTP_PROXY_ENABLED:true}
+    host: ${HTTP_PROXY_HOST:http-gw.tcif.telstra.com.au}
+    port: ${HTTP_PROXY_PORT:8080}
+    # Set these as environment variables - never commit real credentials
+    username: ${HTTP_PROXY_USERNAME:}
+    password: ${HTTP_PROXY_PASSWORD:}
+
+# ---- Optional trust store for the API's TLS certificate ----
+# e.g. TRUST_STORE=file:D:/certs/truststore.jks  or  classpath:truststore.jks
+trust:
+  store: ${TRUST_STORE:}
+  password: ${TRUST_STORE_PASSWORD:}

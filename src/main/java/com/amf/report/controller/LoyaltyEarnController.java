@@ -1,6 +1,6 @@
 package com.amf.report.controller;
 
-import com.amf.report.dto.LoyaltyEarnRequestDto;
+import com.amf.report.dto.LoyaltyEarnDto;
 import com.amf.report.dto.LoyaltyEarnResponseDto;
 import com.amf.report.service.LoyaltyEarnService;
 import jakarta.validation.Valid;
@@ -20,9 +20,15 @@ public class LoyaltyEarnController {
 
     @PostMapping
     public ResponseEntity<LoyaltyEarnResponseDto> saveLoyaltyEarn(
-            @Valid @RequestBody LoyaltyEarnRequestDto request) {
+            @Valid @RequestBody LoyaltyEarnDto request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(loyaltyEarnService.saveLoyaltyEarn(request));
+    }
+
+    /** Calls the external loyaltyEarn TMF API and saves all records to MySQL. */
+    @PostMapping("/sync")
+    public ResponseEntity<List<LoyaltyEarnResponseDto>> syncLoyaltyEarns() {
+        return ResponseEntity.ok(loyaltyEarnService.syncLoyaltyEarnsFromApi());
     }
 
     @GetMapping
