@@ -44,9 +44,6 @@ public class BeanConfig {
     @Value("${http.proxy.password:}")
     private String proxyPassword;
 
-    @Value("${http.connect-timeout-ms:10000}")
-    private long connectTimeoutMs;
-
     @Value("${http.read-timeout-ms:30000}")
     private long readTimeoutMs;
 
@@ -97,7 +94,6 @@ public class BeanConfig {
 
         HttpComponentsClientHttpRequestFactory factory =
                 new HttpComponentsClientHttpRequestFactory(clientBuilder.build());
-        factory.setConnectTimeout(Duration.ofMillis(connectTimeoutMs));
         factory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
 
         return new RestTemplate(factory);
