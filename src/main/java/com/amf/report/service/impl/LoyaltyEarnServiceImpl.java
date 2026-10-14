@@ -28,25 +28,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.amf.report.constant.AppConstants.ACCOUNT_BALANCE_LIST;
 import static com.amf.report.constant.AppConstants.ALLOWED_EARNING_TYPES;
 import static com.amf.report.constant.AppConstants.CHARACTERISTIC_CIDN;
 import static com.amf.report.constant.AppConstants.CHARACTERISTIC_EARNING_TYPE;
 import static com.amf.report.constant.AppConstants.CHARACTERISTIC_POLICY_ID;
+import static com.amf.report.constant.AppConstants.LOYALTY_EARN_LIST;
+import static com.amf.report.constant.AppConstants.LOYALTY_RULE_LIST;
+import static com.amf.report.constant.AppConstants.PROGRAM_MEMBER_LIST;
 import static com.amf.report.constant.AppConstants.TOTAL_BALANCE_TYPES;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
-
-    private static final ParameterizedTypeReference<List<LoyaltyEarnDto>> LOYALTY_EARN_LIST =
-            new ParameterizedTypeReference<>() {};
-    private static final ParameterizedTypeReference<List<LoyaltyRuleDto>> LOYALTY_RULE_LIST =
-            new ParameterizedTypeReference<>() {};
-    private static final ParameterizedTypeReference<List<ProgramMemberDto>> PROGRAM_MEMBER_LIST =
-            new ParameterizedTypeReference<>() {};
-    private static final ParameterizedTypeReference<List<LoyaltyAccountBalanceDto>> ACCOUNT_BALANCE_LIST =
-            new ParameterizedTypeReference<>() {};
 
     private final LoyaltyEarnRecordRepository loyaltyEarnRecordRepository;
     private final HttpService httpService;

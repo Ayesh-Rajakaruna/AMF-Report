@@ -1,5 +1,12 @@
 package com.amf.report.constant;
 
+import com.amf.report.dto.LoyaltyAccountBalanceDto;
+import com.amf.report.dto.LoyaltyEarnDto;
+import com.amf.report.dto.LoyaltyRuleDto;
+import com.amf.report.dto.ProgramMemberDto;
+import org.springframework.core.ParameterizedTypeReference;
+
+import java.util.List;
 import java.util.Set;
 
 /** Application-wide constants. */
@@ -34,4 +41,14 @@ public final class AppConstants {
 
     public static final Set<String> TOTAL_BALANCE_TYPES = Set.of(
             BALANCE_TYPE_UPFRONT_TOTAL, BALANCE_TYPE_EARNING_TOTAL, BALANCE_TYPE_MANUAL_CREDIT_TOTAL);
+
+    // ---- Response types for the loyalty TMF API calls ----
+    public static final ParameterizedTypeReference<List<LoyaltyEarnDto>> LOYALTY_EARN_LIST =
+            new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<List<LoyaltyRuleDto>> LOYALTY_RULE_LIST =
+            new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<List<ProgramMemberDto>> PROGRAM_MEMBER_LIST =
+            new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<List<LoyaltyAccountBalanceDto>> ACCOUNT_BALANCE_LIST =
+            new ParameterizedTypeReference<>() {};
 }
