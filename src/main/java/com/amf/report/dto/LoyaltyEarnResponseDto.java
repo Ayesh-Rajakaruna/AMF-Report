@@ -1,0 +1,22 @@
+package com.amf.report.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class LoyaltyEarnResponseDto {
+
+    private Long id;
+    private BigDecimal planContribution;
+    private String policyId;
+    private String loyaltyProgramMember;
+    private LocalDateTime createdAt;
+}
