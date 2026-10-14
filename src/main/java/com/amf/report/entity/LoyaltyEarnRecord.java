@@ -24,13 +24,17 @@ public class LoyaltyEarnRecord {
     @Column(name = "plan_contribution", precision = 19, scale = 2)
     private BigDecimal planContribution;
 
-    /** loyaltyEarn.policyId */
+    /** usageCharacteristic "PolicyId" */
     @Column(name = "policy_id", length = 100)
     private String policyId;
 
     /** loyaltyEarn.loyaltyProgramMember.id */
     @Column(name = "loyalty_program_member", length = 100)
     private String loyaltyProgramMember;
+
+    /** usageCharacteristic "EarningType" - Monthly or Upfront */
+    @Column(name = "earning_type", length = 20)
+    private String earningType;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -7,15 +7,21 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * TMF LoyaltyEarn resource (only the fields this service uses), e.g.
  * <pre>
  * {
- *   "id": "LE-1",
- *   "quantity": { "value": 25.50 },
- *   "policyId": "POL-1001",
- *   "loyaltyProgramMember": { "id": "LPM-2001" }
+ *   "id": "18e278f7-..._1790221917153",
+ *   "quantity": { "unit": "AUD", "value": 13.825570 },
+ *   "loyaltyProgramMember": { "id": "8e28ac9f-..._1789555298956" },
+ *   "usageCharacteristic": [
+ *     { "name": "EarningType", "valueType": "String", "value": "Monthly" },
+ *     { "name": "PolicyId",    "valueType": "String", "value": "0d4e7ea5-..." }
+ *   ]
  * }
  * </pre>
  */
@@ -30,9 +36,19 @@ public class LoyaltyEarnDto {
 
     private QuantityDto quantity;
 
-    private String policyId;
-
     private LoyaltyProgramMemberDto loyaltyProgramMember;
+
+    private List<CharacteristicDto> usageCharacteristic;
+
+    /** Value of the usageCharacteristic with the given name (case-insensitive), or null. */
+    public String getUsageCharacteristicValue(String name) {
+        return Optional.ofNullable(usageCharacteristic).orElse(List.of()).stream()
+                .filter(Objects::nonNull)
+                .filter(c -> name.equalsIgnoreCase(c.getName()))
+                .map(CharacteristicDto::getValue)
+                .findFirst()
+                .orElse(null);
+    }
 
     @Data
     @NoArgsConstructor
@@ -48,5 +64,14 @@ public class LoyaltyEarnDto {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LoyaltyProgramMemberDto {
         private String id;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class CharacteristicDto {
+        private String name;
+        private String value;
     }
 }

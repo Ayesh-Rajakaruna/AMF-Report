@@ -43,9 +43,14 @@ class HttpServiceImplTest {
                   {
                     "id": "LE-1",
                     "@type": "LoyaltyEarn",
-                    "quantity": { "value": 25.50, "unit": "points" },
-                    "policyId": "POL-1001",
-                    "loyaltyProgramMember": { "id": "LPM-2001", "href": "x" }
+                    "quantity": { "value": 25.50, "unit": "AUD" },
+                    "loyaltyProgramMember": { "id": "LPM-2001", "href": "x" },
+                    "usageCharacteristic": [
+                      { "id": "c1", "name": "EarningType", "valueType": "String",
+                        "value": "Monthly", "@type": "StringCharacteristic" },
+                      { "id": "c2", "name": "PolicyId", "valueType": "String",
+                        "value": "POL-1001", "@type": "StringCharacteristic" }
+                    ]
                   }
                 ]
                 """;
@@ -60,7 +65,8 @@ class HttpServiceImplTest {
         server.verify();
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getQuantity().getValue()).isEqualByComparingTo("25.50");
-        assertThat(result.get(0).getPolicyId()).isEqualTo("POL-1001");
+        assertThat(result.get(0).getUsageCharacteristicValue("EarningType")).isEqualTo("Monthly");
+        assertThat(result.get(0).getUsageCharacteristicValue("PolicyId")).isEqualTo("POL-1001");
         assertThat(result.get(0).getLoyaltyProgramMember().getId()).isEqualTo("LPM-2001");
     }
 
@@ -84,15 +90,15 @@ class HttpServiceImplTest {
         server.expect(requestTo(URL))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(content().json("{\"policyId\":\"POL-9\"}"))
-                .andRespond(withSuccess("{\"policyId\":\"POL-9\"}", MediaType.APPLICATION_JSON));
+                .andExpect(content().json("{\"id\":\"LE-9\"}"))
+                .andRespond(withSuccess("{\"id\":\"LE-9\"}", MediaType.APPLICATION_JSON));
 
-        LoyaltyEarnDto body = LoyaltyEarnDto.builder().policyId("POL-9").build();
+        LoyaltyEarnDto body = LoyaltyEarnDto.builder().id("LE-9").build();
         LoyaltyEarnDto result = httpService.post(URL, body, null,
                 new ParameterizedTypeReference<LoyaltyEarnDto>() {});
 
         server.verify();
-        assertThat(result.getPolicyId()).isEqualTo("POL-9");
+        assertThat(result.getId()).isEqualTo("LE-9");
     }
 
     @Test
