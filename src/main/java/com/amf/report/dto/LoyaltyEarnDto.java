@@ -1,7 +1,6 @@
 package com.amf.report.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,12 +28,10 @@ public class LoyaltyEarnDto {
 
     private String id;
 
-    @Valid
     private QuantityDto quantity;
 
     private String policyId;
 
-    @Valid
     private LoyaltyProgramMemberDto loyaltyProgramMember;
 
     @Data

@@ -15,9 +15,4 @@ public class GlobalExceptionHandler {
         log.error("loyaltyEarn API call failed", ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.getMessage());
     }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ProblemDetail handleBadRequest(IllegalArgumentException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
-    }
 }

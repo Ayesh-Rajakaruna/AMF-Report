@@ -28,15 +28,6 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
 
     @Override
     @Transactional
-    public LoyaltyEarnResponseDto saveLoyaltyEarn(LoyaltyEarnDto loyaltyEarn) {
-        if (loyaltyEarn == null) {
-            throw new IllegalArgumentException("loyaltyEarn must not be null");
-        }
-        return toResponse(loyaltyEarnRecordRepository.save(toEntity(loyaltyEarn)));
-    }
-
-    @Override
-    @Transactional
     public List<LoyaltyEarnResponseDto> syncLoyaltyEarnsFromApi() {
         List<LoyaltyEarnRecord> records = loyaltyEarnHttpService.getAllLoyaltyEarns().stream()
                 .filter(Objects::nonNull)
@@ -46,14 +37,6 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         List<LoyaltyEarnRecord> saved = loyaltyEarnRecordRepository.saveAll(records);
         log.info("Saved {} loyaltyEarn record(s) to MySQL", saved.size());
         return saved.stream().map(this::toResponse).toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<LoyaltyEarnResponseDto> getAllLoyaltyEarns() {
-        return loyaltyEarnRecordRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
     }
 
     private LoyaltyEarnRecord toEntity(LoyaltyEarnDto loyaltyEarn) {

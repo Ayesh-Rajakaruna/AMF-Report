@@ -19,10 +19,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LoyaltyEarnServiceImplTest {
@@ -47,48 +46,15 @@ class LoyaltyEarnServiceImplTest {
                 .build();
     }
 
-    @Test
-    void saveLoyaltyEarn_mapsAllThreeFields() {
-        when(repository.save(any(LoyaltyEarnRecord.class))).thenAnswer(inv -> {
-            LoyaltyEarnRecord r = inv.getArgument(0);
-            r.setId(1L);
-            return r;
-        });
-
-        LoyaltyEarnResponseDto response = service.saveLoyaltyEarn(loyaltyEarn("25.50", "POL-1001", "LPM-2001"));
-
-        ArgumentCaptor<LoyaltyEarnRecord> captor = ArgumentCaptor.forClass(LoyaltyEarnRecord.class);
-        verify(repository).save(captor.capture());
-        LoyaltyEarnRecord saved = captor.getValue();
-        assertThat(saved.getPlanContribution()).isEqualByComparingTo("25.50");
-        assertThat(saved.getPolicyId()).isEqualTo("POL-1001");
-        assertThat(saved.getLoyaltyProgramMember()).isEqualTo("LPM-2001");
-        assertThat(response.getId()).isEqualTo(1L);
-        assertThat(response.getPolicyId()).isEqualTo("POL-1001");
-    }
-
-    @Test
-    void saveLoyaltyEarn_nullNestedObjects_savesNulls() {
-        LoyaltyEarnDto request = LoyaltyEarnDto.builder().policyId("POL-1").build();
-        when(repository.save(any(LoyaltyEarnRecord.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        LoyaltyEarnResponseDto response = service.saveLoyaltyEarn(request);
-
-        assertThat(response.getPlanContribution()).isNull();
-        assertThat(response.getLoyaltyProgramMember()).isNull();
-        assertThat(response.getPolicyId()).isEqualTo("POL-1");
-    }
-
-    @Test
-    void saveLoyaltyEarn_nullRequest_throws() {
-        assertThatThrownBy(() -> service.saveLoyaltyEarn(null))
-                .isInstanceOf(IllegalArgumentException.class);
-        verifyNoInteractions(repository);
-    }
-
-    @Test
     @SuppressWarnings("unchecked")
-    void syncLoyaltyEarnsFromApi_savesEveryRecordFromApi() {
+    private List<LoyaltyEarnRecord> captureSaved() {
+        ArgumentCaptor<List<LoyaltyEarnRecord>> captor = ArgumentCaptor.forClass(List.class);
+        verify(repository).saveAll(captor.capture());
+        return captor.getValue();
+    }
+
+    @Test
+    void syncLoyaltyEarnsFromApi_mapsAndSavesEveryRecord() {
         when(loyaltyEarnHttpService.getAllLoyaltyEarns()).thenReturn(List.of(
                 loyaltyEarn("10", "POL-1", "LPM-1"),
                 loyaltyEarn("20.75", "POL-2", "LPM-2")));
@@ -96,14 +62,27 @@ class LoyaltyEarnServiceImplTest {
 
         List<LoyaltyEarnResponseDto> result = service.syncLoyaltyEarnsFromApi();
 
-        ArgumentCaptor<List<LoyaltyEarnRecord>> captor = ArgumentCaptor.forClass(List.class);
-        verify(repository).saveAll(captor.capture());
-        List<LoyaltyEarnRecord> saved = captor.getValue();
+        List<LoyaltyEarnRecord> saved = captureSaved();
         assertThat(saved).hasSize(2);
         assertThat(saved.get(1).getPlanContribution()).isEqualByComparingTo("20.75");
         assertThat(saved.get(1).getPolicyId()).isEqualTo("POL-2");
         assertThat(saved.get(1).getLoyaltyProgramMember()).isEqualTo("LPM-2");
-        assertThat(result).extracting(LoyaltyEarnResponseDto::getPolicyId).containsExactly("POL-1", "POL-2");
+        assertThat(result).extracting(LoyaltyEarnResponseDto::getPolicyId)
+                .containsExactly("POL-1", "POL-2");
+    }
+
+    @Test
+    void syncLoyaltyEarnsFromApi_nullNestedObjects_savesNulls() {
+        when(loyaltyEarnHttpService.getAllLoyaltyEarns()).thenReturn(List.of(
+                LoyaltyEarnDto.builder().policyId("POL-1").build()));
+        when(repository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+
+        List<LoyaltyEarnResponseDto> result = service.syncLoyaltyEarnsFromApi();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getPlanContribution()).isNull();
+        assertThat(result.get(0).getLoyaltyProgramMember()).isNull();
+        assertThat(result.get(0).getPolicyId()).isEqualTo("POL-1");
     }
 
     @Test
@@ -112,5 +91,6 @@ class LoyaltyEarnServiceImplTest {
         when(repository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
         assertThat(service.syncLoyaltyEarnsFromApi()).isEmpty();
+        assertThat(captureSaved()).isEmpty();
     }
 }
