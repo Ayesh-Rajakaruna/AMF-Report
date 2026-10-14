@@ -7,13 +7,22 @@ import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.HttpHost;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+import static com.amf.report.constant.AppConstants.PROXY_HOST;
+import static com.amf.report.constant.AppConstants.PROXY_PORT;
+import static com.amf.report.constant.AppConstants.PROXY_USERNAME;
+
 @Configuration
 public class BeanConfig {
+
+    /** Proxy password comes from the HTTP_PROXY_PASSWORD environment variable - never hardcode it. */
+    @Value("${http.proxy.password}")
+    private String proxyPassword;
 
     @Bean
     public ModelMapper modelMapper() {
@@ -22,16 +31,12 @@ public class BeanConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        String proxyHost = "http-gw.tcif.telstra.com.au";
-        int proxyPort = 8080;
-        String proxyUsername = "e045577";
-        String proxyPassword = "15Wimantha@1997";
         BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(
-                new AuthScope(proxyHost, proxyPort),
-                new UsernamePasswordCredentials(proxyUsername, proxyPassword.toCharArray())
+                new AuthScope(PROXY_HOST, PROXY_PORT),
+                new UsernamePasswordCredentials(PROXY_USERNAME, proxyPassword.toCharArray())
         );
-        HttpHost myProxy = new HttpHost(proxyHost, proxyPort);
+        HttpHost myProxy = new HttpHost(PROXY_HOST, PROXY_PORT);
         HttpClientBuilder clientBuilder = HttpClientBuilder.create();
         clientBuilder.setProxy(myProxy).setDefaultCredentialsProvider(credsProvider).disableCookieManagement();
         HttpClient httpClient = clientBuilder.build();

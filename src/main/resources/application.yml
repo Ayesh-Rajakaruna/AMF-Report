@@ -22,8 +22,7 @@ loyalty:
   api:
     loyalty-earn-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyEarn
 
-# ---- Optional trust store for the API's TLS certificate ----
-# e.g. TRUST_STORE=file:D:/certs/truststore.jks  or  classpath:truststore.jks
-trust:
-  store: ${TRUST_STORE:}
-  password: ${TRUST_STORE_PASSWORD:}
+# ---- Outbound HTTP proxy (host/port/username are in AppConstants) ----
+http:
+  proxy:
+    password: ${HTTP_PROXY_PASSWORD}

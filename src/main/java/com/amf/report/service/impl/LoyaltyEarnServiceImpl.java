@@ -19,7 +19,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+
+import static com.amf.report.constant.AppConstants.ALLOWED_EARNING_TYPES;
+import static com.amf.report.constant.AppConstants.CHARACTERISTIC_EARNING_TYPE;
+import static com.amf.report.constant.AppConstants.CHARACTERISTIC_POLICY_ID;
 
 @Slf4j
 @Service
@@ -28,14 +31,6 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
 
     private static final ParameterizedTypeReference<List<LoyaltyEarnDto>> LOYALTY_EARN_LIST =
             new ParameterizedTypeReference<>() {};
-
-    static final String EARNING_TYPE = "EarningType";
-    static final String POLICY_ID = "PolicyId";
-    static final String MONTHLY = "Monthly";
-    static final String UPFRONT = "Upfront";
-
-    /** Only these earning types are saved; others (e.g. ManualCredit) are skipped. */
-    private static final Set<String> ALLOWED_EARNING_TYPES = Set.of(MONTHLY, UPFRONT);
 
     private final LoyaltyEarnRecordRepository loyaltyEarnRecordRepository;
     private final HttpService httpService;
@@ -65,7 +60,7 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     }
 
     private boolean isMonthlyOrUpfront(LoyaltyEarnDto loyaltyEarn) {
-        return normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(EARNING_TYPE)) != null;
+        return normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE)) != null;
     }
 
     /** Returns "Monthly" or "Upfront" (canonical case) for an allowed type, otherwise null. */
@@ -82,9 +77,9 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     private LoyaltyEarnRecord toEntity(LoyaltyEarnDto loyaltyEarn) {
         return LoyaltyEarnRecord.builder()
                 .planContribution(extractPlanContribution(loyaltyEarn))
-                .policyId(loyaltyEarn.getUsageCharacteristicValue(POLICY_ID))
+                .policyId(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID))
                 .loyaltyProgramMember(extractLoyaltyProgramMemberId(loyaltyEarn))
-                .earningType(normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(EARNING_TYPE)))
+                .earningType(normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE)))
                 .build();
     }
 

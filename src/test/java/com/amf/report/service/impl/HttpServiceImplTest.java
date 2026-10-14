@@ -37,7 +37,7 @@ class HttpServiceImplTest {
     }
 
     @Test
-    void get_parsesJsonListAndSendsAcceptHeader() {
+    void get_parsesJsonListIncludingObjectValuedCharacteristic() {
         String json = """
                 [
                   {
@@ -46,6 +46,8 @@ class HttpServiceImplTest {
                     "quantity": { "value": 25.50, "unit": "AUD" },
                     "loyaltyProgramMember": { "id": "LPM-2001", "href": "x" },
                     "usageCharacteristic": [
+                      { "id": "c0", "name": "OriginalOrder",
+                        "value": { "id": "ORD-1", "type": "Order" }, "@type": "ObjectCharacteristic" },
                       { "id": "c1", "name": "EarningType", "valueType": "String",
                         "value": "Monthly", "@type": "StringCharacteristic" },
                       { "id": "c2", "name": "PolicyId", "valueType": "String",
@@ -67,6 +69,8 @@ class HttpServiceImplTest {
         assertThat(result.get(0).getQuantity().getValue()).isEqualByComparingTo("25.50");
         assertThat(result.get(0).getUsageCharacteristicValue("EarningType")).isEqualTo("Monthly");
         assertThat(result.get(0).getUsageCharacteristicValue("PolicyId")).isEqualTo("POL-1001");
+        // object-valued characteristic is parsed without error and has no text value
+        assertThat(result.get(0).getUsageCharacteristicValue("OriginalOrder")).isNull();
         assertThat(result.get(0).getLoyaltyProgramMember().getId()).isEqualTo("LPM-2001");
     }
 

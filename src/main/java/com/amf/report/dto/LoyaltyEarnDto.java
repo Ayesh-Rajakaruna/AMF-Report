@@ -1,5 +1,6 @@
 package com.amf.report.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,12 +41,16 @@ public class LoyaltyEarnDto {
 
     private List<CharacteristicDto> usageCharacteristic;
 
-    /** Value of the usageCharacteristic with the given name (case-insensitive), or null. */
+    /**
+     * Value of the usageCharacteristic with the given name (case-insensitive) as text,
+     * or null if missing or not a simple value (e.g. an object or array).
+     */
     public String getUsageCharacteristicValue(String name) {
         return Optional.ofNullable(usageCharacteristic).orElse(List.of()).stream()
                 .filter(Objects::nonNull)
                 .filter(c -> name.equalsIgnoreCase(c.getName()))
-                .map(CharacteristicDto::getValue)
+                .map(CharacteristicDto::getValueAsText)
+                .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
     }
@@ -72,6 +77,20 @@ public class LoyaltyEarnDto {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CharacteristicDto {
         private String name;
-        private String value;
+
+        /**
+         * Usually a string, but some characteristics (e.g. ObjectCharacteristic)
+         * carry a JSON object or array, so this is kept as a raw Object.
+         */
+        private Object value;
+
+        /** The value as text when it is a simple value (string, number, boolean), otherwise null. */
+        @JsonIgnore
+        public String getValueAsText() {
+            if (value instanceof String || value instanceof Number || value instanceof Boolean) {
+                return value.toString();
+            }
+            return null;
+        }
     }
 }
