@@ -20,7 +20,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class HttpServiceImpl implements HttpService {
-
     private final RestTemplate restTemplate;
 
     @Override

@@ -11,13 +11,12 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update   # creates/updates the loyalty_earn_record table from the entity
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
 
-# ---- Loyalty TMF APIs ----
 loyalty:
   api:
     loyalty-earn-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyEarn
@@ -25,7 +24,6 @@ loyalty:
     loyalty-program-member-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyProgramMember
     loyalty-account-balance-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyAccountBalance?balanceType=UpfrontBalanceTotal&balanceType=EarningBalanceTotal&balanceType=ManualCreditBalanceTotal
 
-# ---- Outbound HTTP proxy (host/port/username are in AppConstants) ----
 http:
   proxy:
     password: ${HTTP_PROXY_PASSWORD}

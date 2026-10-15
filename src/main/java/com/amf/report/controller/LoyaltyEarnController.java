@@ -14,10 +14,8 @@ import java.util.List;
 @RequestMapping("/api/loyalty-earn")
 @RequiredArgsConstructor
 public class LoyaltyEarnController {
-
     private final LoyaltyEarnService loyaltyEarnService;
 
-    /** Calls the external loyaltyEarn TMF API and saves all records to MySQL. */
     @PostMapping("/sync")
     public ResponseEntity<List<LoyaltyEarnResponseDto>> syncLoyaltyEarns() {
         return ResponseEntity.ok(loyaltyEarnService.syncLoyaltyEarnsFromApi());

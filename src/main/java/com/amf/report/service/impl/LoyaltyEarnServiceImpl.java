@@ -5,7 +5,6 @@ import com.amf.report.dto.LoyaltyAccountBalanceDto;
 import com.amf.report.dto.LoyaltyEarnDto;
 import com.amf.report.dto.LoyaltyEarnResponseDto;
 import com.amf.report.dto.LoyaltyRuleDto;
-import com.amf.report.dto.MemberInfo;
 import com.amf.report.dto.ProgramMemberDto;
 import com.amf.report.entity.LoyaltyEarnRecord;
 import com.amf.report.repository.LoyaltyEarnRecordRepository;
@@ -13,6 +12,7 @@ import com.amf.report.service.HttpService;
 import com.amf.report.service.LoyaltyEarnService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -42,7 +42,6 @@ import static com.amf.report.constant.AppConstants.TOTAL_BALANCE_TYPES;
 @Service
 @RequiredArgsConstructor
 public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
-
     private final LoyaltyEarnRecordRepository loyaltyEarnRecordRepository;
     private final HttpService httpService;
     private final ModelMapper modelMapper;
@@ -71,7 +70,7 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
                 loyaltyEarns.size(), monthlyOrUpfront.size());
 
         Map<String, String> policyNameById = loadPolicyNames();
-        Map<String, MemberInfo> memberById = loadMembers();
+        Map<String, Pair<String, String>> memberById = loadMembers();
         Map<String, BigDecimal> totalBalanceByCidn = loadTotalBalances();
 
         List<LoyaltyEarnRecord> records = monthlyOrUpfront.stream()
@@ -83,11 +82,6 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         return saved.stream().map(this::toResponse).toList();
     }
 
-    // ---------------------------------------------------------------------------------
-    // Lookup maps
-    // ---------------------------------------------------------------------------------
-
-    /** loyaltyRule.id (= loyaltyEarn PolicyId) -> loyaltyRule.policyName */
     Map<String, String> loadPolicyNames() {
         Map<String, String> policyNameById = new HashMap<>();
         for (LoyaltyRuleDto rule : fetchList(loyaltyRuleUrl, LOYALTY_RULE_LIST)) {
@@ -99,22 +93,17 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         return policyNameById;
     }
 
-    /** loyaltyProgramMember.id -> (name, characteristic value = CIDN) */
-    Map<String, MemberInfo> loadMembers() {
-        Map<String, MemberInfo> memberById = new HashMap<>();
+    Map<String, Pair<String, String>> loadMembers() {
+        Map<String, Pair<String, String>> memberById = new HashMap<>();
         for (ProgramMemberDto member : fetchList(loyaltyProgramMemberUrl, PROGRAM_MEMBER_LIST)) {
             if (member != null && member.getId() != null) {
-                memberById.putIfAbsent(member.getId(), new MemberInfo(member.getName(), extractCidn(member)));
+                memberById.putIfAbsent(member.getId(), Pair.of(member.getName(), extractCidn(member)));
             }
         }
         log.info("Loaded {} program member(s)", memberById.size());
         return memberById;
     }
 
-    /**
-     * CIDN (loyaltyAccountBalance relatedAccount.name) -> total balance, where total balance is
-     * UpfrontBalanceTotal + EarningBalanceTotal + ManualCreditBalanceTotal for that CIDN.
-     */
     Map<String, BigDecimal> loadTotalBalances() {
         Map<String, BigDecimal> totalBalanceByCidn = new HashMap<>();
         for (LoyaltyAccountBalanceDto balance : fetchList(loyaltyAccountBalanceUrl, ACCOUNT_BALANCE_LIST)) {
@@ -132,7 +121,6 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         return totalBalanceByCidn;
     }
 
-    /** CIDN from the member's "CIDN" characteristic, falling back to the first characteristic value. */
     private static String extractCidn(ProgramMemberDto member) {
         String cidn = CharacteristicDto.findValue(member.getCharacteristic(), CHARACTERISTIC_CIDN);
         return cidn != null ? cidn : CharacteristicDto.firstValue(member.getCharacteristic());
@@ -142,15 +130,10 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         return Optional.ofNullable(httpService.get(url, type)).orElse(Collections.emptyList());
     }
 
-    // ---------------------------------------------------------------------------------
-    // Mapping
-    // ---------------------------------------------------------------------------------
-
     private boolean isMonthlyOrUpfront(LoyaltyEarnDto loyaltyEarn) {
         return normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE)) != null;
     }
 
-    /** Returns "Monthly" or "Upfront" (canonical case) for an allowed type, otherwise null. */
     private String normalizeEarningType(String earningType) {
         if (earningType == null) {
             return null;
@@ -163,12 +146,12 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
 
     private LoyaltyEarnRecord toEntity(LoyaltyEarnDto loyaltyEarn,
                                       Map<String, String> policyNameById,
-                                      Map<String, MemberInfo> memberById,
+                                      Map<String, Pair<String, String>> memberById,
                                       Map<String, BigDecimal> totalBalanceByCidn) {
         String policyId = loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID);
         String memberId = extractLoyaltyProgramMemberId(loyaltyEarn);
-        MemberInfo member = memberId == null ? null : memberById.get(memberId);
-        String cidn = member == null ? null : member.cidn();
+        Pair<String, String> member = memberId == null ? null : memberById.get(memberId);
+        String cidn = member == null ? null : member.getRight();
 
         BigDecimal totalBalance = cidn == null ? null : totalBalanceByCidn.get(cidn.trim());
 
@@ -178,7 +161,7 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
                 .loyaltyProgramMember(memberId)
                 .earningType(normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE)))
                 .policyName(policyId == null ? null : policyNameById.get(policyId))
-                .organizationName(member == null ? null : member.organizationName())
+                .organizationName(member == null ? null : member.getLeft())
                 .cidn(cidn)
                 .totalBalance(totalBalance)
                 .build();
