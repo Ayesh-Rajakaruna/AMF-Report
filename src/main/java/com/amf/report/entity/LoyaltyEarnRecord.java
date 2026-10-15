@@ -37,11 +37,11 @@ public class LoyaltyEarnRecord {
     private String earningType;
 
     /** loyaltyRule.policyName, looked up by PolicyId */
-    @Column(name = "policy_name")
+    @Column(name = "policy_name", columnDefinition = "TEXT")
     private String policyName;
 
     /** loyaltyProgramMember.name, looked up by loyaltyProgramMember.id */
-    @Column(name = "organization_name")
+    @Column(name = "organization_name", columnDefinition = "TEXT")
     private String organizationName;
 
     /** loyaltyProgramMember characteristic value (CIDN) */
