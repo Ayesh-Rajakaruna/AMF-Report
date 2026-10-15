@@ -60,8 +60,7 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
                 report.productGroupName(),
                 file.getFileName().toString(),
                 file.toAbsolutePath().toString(),
-                report.recordCount(),
-                report.notFoundCount());
+                report.recordCount());
     }
 
     OrganizationReportFile createOrganizationReport(String environment, String productGroupId) {
@@ -78,15 +77,13 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
         Map<String, OrganizationDto> organizationById = loadOrganizations(baseUrl, addedCustomers);
 
         List<OrganizationReportRecord> records = addedCustomers.stream()
-                .map(customerId -> toRecord(customerId, organizationById))
+                .filter(StringUtils::hasText)
+                .map(customerId -> organizationById.get(customerId.trim()))
+                .filter(Objects::nonNull)
+                .map(this::toRecord)
+                .filter(this::hasData)
                 .toList();
-
-        List<String> notFound = addedCustomers.stream()
-                .filter(id -> !StringUtils.hasText(id) || !organizationById.containsKey(id.trim()))
-                .toList();
-        if (!notFound.isEmpty()) {
-            log.warn("{} addedCustomers were not returned by the organization API: {}", notFound.size(), notFound);
-        }
+        log.info("Writing {} organization row(s)", records.size());
 
         byte[] content = excelService.createOrganizationReport(records);
         return OrganizationReportFile.builder()
@@ -96,7 +93,6 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
                 .fileName(buildFileName(productGroup.getName(), env))
                 .content(content)
                 .recordCount(records.size())
-                .notFoundCount(notFound.size())
                 .build();
     }
 
@@ -151,13 +147,16 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
         return organizationById;
     }
 
-    private OrganizationReportRecord toRecord(String customerId, Map<String, OrganizationDto> organizationById) {
-        OrganizationDto organization = StringUtils.hasText(customerId) ? organizationById.get(customerId.trim()) : null;
+    private OrganizationReportRecord toRecord(OrganizationDto organization) {
         return OrganizationReportRecord.builder()
-                .organizationId(customerId)
-                .organizationName(organization == null ? null : organization.getName())
-                .cidn(organization == null ? null : organization.getPartyCharacteristicValue(CHARACTERISTIC_CIDN))
+                .organizationId(organization.getId())
+                .organizationName(organization.getName())
+                .cidn(organization.getPartyCharacteristicValue(CHARACTERISTIC_CIDN))
                 .build();
+    }
+
+    private boolean hasData(OrganizationReportRecord record) {
+        return StringUtils.hasText(record.organizationName()) || StringUtils.hasText(record.cidn());
     }
 
     private static String validateProductGroupId(String productGroupId) {

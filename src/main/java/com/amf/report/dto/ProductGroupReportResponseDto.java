@@ -6,6 +6,5 @@ public record ProductGroupReportResponseDto(
         String productGroupName,
         String fileName,
         String filePath,
-        int recordCount,
-        int notFoundCount) {
+        int recordCount) {
 }

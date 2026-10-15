@@ -10,6 +10,5 @@ public record OrganizationReportFile(
         String productGroupName,
         String fileName,
         byte[] content,
-        int recordCount,
-        int notFoundCount) {
+        int recordCount) {
 }
