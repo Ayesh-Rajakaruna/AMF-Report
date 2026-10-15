@@ -23,7 +23,6 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class HttpServiceImplTest {
-
     private static final String URL = "https://example.test/tmf-api/loyalty/v4/loyaltyEarn";
 
     private MockRestServiceServer server;
@@ -69,7 +68,7 @@ class HttpServiceImplTest {
         assertThat(result.get(0).getQuantity().getValue()).isEqualByComparingTo("25.50");
         assertThat(result.get(0).getUsageCharacteristicValue("EarningType")).isEqualTo("Monthly");
         assertThat(result.get(0).getUsageCharacteristicValue("PolicyId")).isEqualTo("POL-1001");
-        // object-valued characteristic is parsed without error and has no text value
+
         assertThat(result.get(0).getUsageCharacteristicValue("OriginalOrder")).isNull();
         assertThat(result.get(0).getLoyaltyProgramMember().getId()).isEqualTo("LPM-2001");
     }

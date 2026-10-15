@@ -8,17 +8,12 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * TMF LoyaltyProgramMember. {@code name} is the organization name and the
- * characteristic value is the CIDN.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ProgramMemberDto {
-
     private String id;
 
     private String name;

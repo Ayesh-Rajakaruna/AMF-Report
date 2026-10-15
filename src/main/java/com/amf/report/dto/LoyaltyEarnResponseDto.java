@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class LoyaltyEarnResponseDto {
-
     private Long id;
     private BigDecimal planContribution;
     private String policyId;

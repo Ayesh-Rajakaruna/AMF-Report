@@ -35,7 +35,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LoyaltyEarnServiceImplTest {
-
     private static final String LOYALTY_EARN_URL = "https://example.test/loyaltyEarn";
     private static final String LOYALTY_RULE_URL = "https://example.test/loyaltyRule";
     private static final String PROGRAM_MEMBER_URL = "https://example.test/loyaltyProgramMember";
@@ -265,7 +264,7 @@ class LoyaltyEarnServiceImplTest {
                 .id("LPM-1").name("Acme")
                 .characteristic(List.of(new CharacteristicDto("CIDN", "6781234778")))
                 .build()));
-        // account id matches the member id, but the CIDN (name) is different -> no match
+
         stubGet(ACCOUNT_BALANCE_URL, List.of(
                 balance("UpfrontBalanceTotal", "LPM-1", "9999999999", "100")));
         saveAllReturnsInput();
