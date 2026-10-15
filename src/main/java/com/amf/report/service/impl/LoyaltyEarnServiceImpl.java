@@ -174,7 +174,6 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         BigDecimal totalBalance = cidn == null ? null : totalBalanceByCidn.get(cidn.trim());
 
         return LoyaltyEarnRecord.builder()
-                .id(loyaltyEarn.id())
                 .planContribution(loyaltyEarn.planContribution())
                 .earningType(loyaltyEarn.earningType())
                 .policyName(policyId == null ? null : policyNameById.get(policyId))

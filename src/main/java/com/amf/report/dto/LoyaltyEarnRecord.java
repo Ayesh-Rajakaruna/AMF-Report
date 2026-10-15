@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class LoyaltyEarnRecord {
-    private String id;
 
     private BigDecimal planContribution;
 
