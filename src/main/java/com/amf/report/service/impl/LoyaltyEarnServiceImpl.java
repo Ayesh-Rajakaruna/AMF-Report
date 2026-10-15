@@ -4,28 +4,24 @@ import com.amf.report.dto.CharacteristicDto;
 import com.amf.report.dto.LoyaltyAccountBalanceDto;
 import com.amf.report.dto.LoyaltyEarnData;
 import com.amf.report.dto.LoyaltyEarnDto;
-import com.amf.report.dto.LoyaltyEarnResponseDto;
+import com.amf.report.dto.LoyaltyEarnRecord;
+import com.amf.report.dto.LoyaltyEarnReportResponseDto;
 import com.amf.report.dto.LoyaltyRuleDto;
 import com.amf.report.dto.ProgramMemberDto;
-import com.amf.report.entity.LoyaltyEarnRecord;
 import com.amf.report.excel.LoyaltyEarnRecordExcelWriter;
-import com.amf.report.repository.LoyaltyEarnRecordRepository;
 import com.amf.report.service.ExcelService;
 import com.amf.report.service.HttpService;
 import com.amf.report.service.LoyaltyEarnService;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,11 +35,8 @@ import static com.amf.report.constant.AppConstants.*;
 @Service
 @RequiredArgsConstructor
 public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
-    private final LoyaltyEarnRecordRepository loyaltyEarnRecordRepository;
     private final HttpService httpService;
     private final ExcelService excelService;
-    private final EntityManager entityManager;
-    private final ModelMapper modelMapper;
 
     @Value("${loyalty.api.loyalty-earn-url}")
     private String loyaltyEarnUrl;
@@ -58,34 +51,26 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     private String loyaltyAccountBalanceUrl;
 
     @Override
-    @Transactional
-    public List<LoyaltyEarnResponseDto> syncLoyaltyEarnsFromApi() {
+    public LoyaltyEarnReportResponseDto syncLoyaltyEarnsFromApi() {
         List<LoyaltyEarnData> loyaltyEarns = loadMonthlyOrUpfrontEarns();
 
         Map<String, String> policyNameById = loadPolicyNames();
         Map<String, Pair<String, String>> memberById = loadMembers();
         Map<String, BigDecimal> totalBalanceByCidn = loadTotalBalances();
 
-        List<LoyaltyEarnResponseDto> responses = new ArrayList<>(loyaltyEarns.size());
         try (LoyaltyEarnRecordExcelWriter excelWriter = excelService.openLoyaltyEarnRecordWriter()) {
             for (int from = 0; from < loyaltyEarns.size(); from += SYNC_BATCH_SIZE) {
                 int to = Math.min(from + SYNC_BATCH_SIZE, loyaltyEarns.size());
                 List<LoyaltyEarnRecord> batch = loyaltyEarns.subList(from, to).stream()
-                        .map(earn -> toEntity(earn, policyNameById, memberById, totalBalanceByCidn))
+                        .map(earn -> toRecord(earn, policyNameById, memberById, totalBalanceByCidn))
                         .toList();
-
-                List<LoyaltyEarnRecord> saved = loyaltyEarnRecordRepository.saveAll(batch);
-                entityManager.flush();
-                excelWriter.append(saved);
-                saved.stream().map(this::toResponse).forEach(responses::add);
-                entityManager.clear();
-
-                log.info("Processed loyaltyEarn records {}-{} of {}", from + 1, to, loyaltyEarns.size());
+                excelWriter.append(batch);
+                log.info("Wrote loyaltyEarn records {}-{} of {} to Excel", from + 1, to, loyaltyEarns.size());
             }
-            excelWriter.finish();
+            Path file = excelWriter.finish();
+            return new LoyaltyEarnReportResponseDto(
+                    file.getFileName().toString(), file.toAbsolutePath().toString(), excelWriter.getRecordCount());
         }
-        log.info("Saved {} loyaltyEarn record(s) to MySQL", responses.size());
-        return responses;
     }
 
     List<LoyaltyEarnData> loadMonthlyOrUpfrontEarns() {
@@ -178,10 +163,10 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
                 .orElse(null);
     }
 
-    private LoyaltyEarnRecord toEntity(LoyaltyEarnData loyaltyEarn,
-                                      Map<String, String> policyNameById,
-                                      Map<String, Pair<String, String>> memberById,
-                                      Map<String, BigDecimal> totalBalanceByCidn) {
+    private LoyaltyEarnRecord toRecord(LoyaltyEarnData loyaltyEarn,
+                                       Map<String, String> policyNameById,
+                                       Map<String, Pair<String, String>> memberById,
+                                       Map<String, BigDecimal> totalBalanceByCidn) {
         String policyId = loyaltyEarn.policyId();
         String memberId = loyaltyEarn.memberId();
         Pair<String, String> member = memberId == null ? null : memberById.get(memberId);
@@ -209,9 +194,5 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         return Optional.ofNullable(loyaltyEarn.getLoyaltyProgramMember())
                 .map(LoyaltyEarnDto.LoyaltyProgramMemberDto::getId)
                 .orElse(null);
-    }
-
-    private LoyaltyEarnResponseDto toResponse(LoyaltyEarnRecord record) {
-        return modelMapper.map(record, LoyaltyEarnResponseDto.class);
     }
 }

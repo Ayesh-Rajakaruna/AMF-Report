@@ -39,14 +39,13 @@ public final class AppConstants {
     public static final String LOYALTY_EARN_RECORD_NAME = "LoyaltyEarnRecord";
     public static final String EXCEL_FILE_EXTENSION = ".xlsx";
     public static final String EXCEL_FILE_TIMESTAMP_PATTERN = "yyyyMMdd_HHmmss";
-    public static final String EXCEL_DATE_TIME_FORMAT = "yyyy-mm-dd hh:mm:ss";
     public static final String EXCEL_DECIMAL_FORMAT = "#,##0.00####";
     public static final int EXCEL_ROW_ACCESS_WINDOW = 100;
     public static final int EXCEL_COLUMN_WIDTH = 22 * 256;
 
     public static final List<String> LOYALTY_EARN_RECORD_HEADERS = List.of(
             "ID", "Plan Contribution", "Earning Type", "Policy Name",
-            "Organization Name", "CIDN", "Total Balance", "Created At");
+            "Organization Name", "CIDN", "Total Balance");
 
     public static final ParameterizedTypeReference<List<LoyaltyEarnDto>> LOYALTY_EARN_LIST =
             new ParameterizedTypeReference<>() {};

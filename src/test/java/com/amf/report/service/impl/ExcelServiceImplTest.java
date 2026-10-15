@@ -1,6 +1,6 @@
 package com.amf.report.service.impl;
 
-import com.amf.report.entity.LoyaltyEarnRecord;
+import com.amf.report.dto.LoyaltyEarnRecord;
 import com.amf.report.excel.LoyaltyEarnRecordExcelWriter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,7 +33,6 @@ class ExcelServiceImplTest {
                 .organizationName("Acme Pty Ltd")
                 .cidn("6781234778")
                 .totalBalance(new BigDecimal("154670.155"))
-                .createdAt(LocalDateTime.of(2026, 10, 15, 9, 40))
                 .build();
         LoyaltyEarnRecord sparse = LoyaltyEarnRecord.builder().id("LE-2").earningType("Upfront").build();
         LoyaltyEarnRecord third = LoyaltyEarnRecord.builder().id("LE-3").earningType("Monthly").build();
@@ -58,7 +56,8 @@ class ExcelServiceImplTest {
 
             Row header = sheet.getRow(0);
             assertThat(header.getCell(0).getStringCellValue()).isEqualTo("ID");
-            assertThat(header.getCell(7).getStringCellValue()).isEqualTo("Created At");
+            assertThat(header.getCell(6).getStringCellValue()).isEqualTo("Total Balance");
+            assertThat(header.getCell(7)).isNull();
 
             Row row = sheet.getRow(1);
             assertThat(row.getCell(0).getStringCellValue()).isEqualTo("LE-1");
@@ -68,7 +67,6 @@ class ExcelServiceImplTest {
             assertThat(row.getCell(4).getStringCellValue()).isEqualTo("Acme Pty Ltd");
             assertThat(row.getCell(5).getStringCellValue()).isEqualTo("6781234778");
             assertThat(row.getCell(6).getNumericCellValue()).isEqualTo(154670.155);
-            assertThat(row.getCell(7).getLocalDateTimeCellValue()).isEqualTo(LocalDateTime.of(2026, 10, 15, 9, 40));
 
             Row sparseRow = sheet.getRow(2);
             assertThat(sparseRow.getCell(0).getStringCellValue()).isEqualTo("LE-2");

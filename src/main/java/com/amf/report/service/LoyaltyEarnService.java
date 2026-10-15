@@ -1,9 +1,7 @@
 package com.amf.report.service;
 
-import com.amf.report.dto.LoyaltyEarnResponseDto;
-
-import java.util.List;
+import com.amf.report.dto.LoyaltyEarnReportResponseDto;
 
 public interface LoyaltyEarnService {
-    List<LoyaltyEarnResponseDto> syncLoyaltyEarnsFromApi();
+    LoyaltyEarnReportResponseDto syncLoyaltyEarnsFromApi();
 }

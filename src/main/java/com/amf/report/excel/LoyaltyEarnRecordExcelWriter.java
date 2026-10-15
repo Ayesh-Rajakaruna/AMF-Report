@@ -1,6 +1,6 @@
 package com.amf.report.excel;
 
-import com.amf.report.entity.LoyaltyEarnRecord;
+import com.amf.report.dto.LoyaltyEarnRecord;
 import com.amf.report.exception.ExcelGenerationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
@@ -15,11 +15,9 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.amf.report.constant.AppConstants.EXCEL_COLUMN_WIDTH;
-import static com.amf.report.constant.AppConstants.EXCEL_DATE_TIME_FORMAT;
 import static com.amf.report.constant.AppConstants.EXCEL_DECIMAL_FORMAT;
 import static com.amf.report.constant.AppConstants.EXCEL_ROW_ACCESS_WINDOW;
 import static com.amf.report.constant.AppConstants.LOYALTY_EARN_RECORD_HEADERS;
@@ -31,7 +29,6 @@ public class LoyaltyEarnRecordExcelWriter implements AutoCloseable {
     private final SXSSFWorkbook workbook;
     private final Sheet sheet;
     private final CellStyle decimalStyle;
-    private final CellStyle dateTimeStyle;
     private int nextRowIndex = 1;
 
     public LoyaltyEarnRecordExcelWriter(Path file) {
@@ -40,7 +37,6 @@ public class LoyaltyEarnRecordExcelWriter implements AutoCloseable {
         this.workbook.setCompressTempFiles(true);
         this.sheet = workbook.createSheet(LOYALTY_EARN_RECORD_NAME);
         this.decimalStyle = formatStyle(EXCEL_DECIMAL_FORMAT);
-        this.dateTimeStyle = formatStyle(EXCEL_DATE_TIME_FORMAT);
         writeHeader();
     }
 
@@ -100,8 +96,7 @@ public class LoyaltyEarnRecordExcelWriter implements AutoCloseable {
         setText(row, col++, record.getPolicyName());
         setText(row, col++, record.getOrganizationName());
         setText(row, col++, record.getCidn());
-        setDecimal(row, col++, record.getTotalBalance());
-        setDateTime(row, col, record.getCreatedAt());
+        setDecimal(row, col, record.getTotalBalance());
     }
 
     private void setText(Row row, int col, String value) {
@@ -115,14 +110,6 @@ public class LoyaltyEarnRecordExcelWriter implements AutoCloseable {
             Cell cell = row.createCell(col);
             cell.setCellValue(value.doubleValue());
             cell.setCellStyle(decimalStyle);
-        }
-    }
-
-    private void setDateTime(Row row, int col, LocalDateTime value) {
-        if (value != null) {
-            Cell cell = row.createCell(col);
-            cell.setCellValue(value);
-            cell.setCellStyle(dateTimeStyle);
         }
     }
 
