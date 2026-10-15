@@ -154,11 +154,8 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         String cidn = member == null ? null : member.getRight();
 
         BigDecimal totalBalance = cidn == null ? null : totalBalanceByCidn.get(cidn.trim());
-
         return LoyaltyEarnRecord.builder()
                 .planContribution(extractPlanContribution(loyaltyEarn))
-                .policyId(policyId)
-                .loyaltyProgramMember(memberId)
                 .earningType(normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE)))
                 .policyName(policyId == null ? null : policyNameById.get(policyId))
                 .organizationName(member == null ? null : member.getLeft())
