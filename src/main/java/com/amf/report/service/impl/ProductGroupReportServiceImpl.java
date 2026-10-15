@@ -51,7 +51,20 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
     private final ProductGroupApiProperties apiProperties;
 
     @Override
-    public OrganizationReportFile createOrganizationReport(String environment, String productGroupId) {
+    public ProductGroupReportResponseDto generateAndSaveOrganizationReport(String environment, String productGroupId) {
+        OrganizationReportFile report = createOrganizationReport(environment, productGroupId);
+        Path file = excelService.saveReport(report.fileName(), report.content());
+        return new ProductGroupReportResponseDto(
+                report.environment().getLabel(),
+                report.productGroupId(),
+                report.productGroupName(),
+                file.getFileName().toString(),
+                file.toAbsolutePath().toString(),
+                report.recordCount(),
+                report.notFoundCount());
+    }
+
+    OrganizationReportFile createOrganizationReport(String environment, String productGroupId) {
         ReportEnvironment env = ReportEnvironment.fromValue(environment);
         String groupId = validateProductGroupId(productGroupId);
         String baseUrl = apiProperties.baseUrl(env);
@@ -86,20 +99,6 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
                 .recordCount(records.size())
                 .notFoundCount(notFound.size())
                 .build();
-    }
-
-    @Override
-    public ProductGroupReportResponseDto generateAndSaveOrganizationReport(String environment, String productGroupId) {
-        OrganizationReportFile report = createOrganizationReport(environment, productGroupId);
-        Path file = excelService.saveReport(report.fileName(), report.content());
-        return new ProductGroupReportResponseDto(
-                report.environment().getLabel(),
-                report.productGroupId(),
-                report.productGroupName(),
-                file.getFileName().toString(),
-                file.toAbsolutePath().toString(),
-                report.recordCount(),
-                report.notFoundCount());
     }
 
     // ---------------- API calls ----------------

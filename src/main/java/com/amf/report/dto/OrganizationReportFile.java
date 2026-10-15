@@ -4,7 +4,7 @@ import com.amf.report.constant.ReportEnvironment;
 import lombok.Builder;
 
 /**
- * A generated organization report held in memory (used for download and for saving to disk).
+ * A generated organization report held in memory before it is saved to disk.
  */
 @Builder
 public record OrganizationReportFile(

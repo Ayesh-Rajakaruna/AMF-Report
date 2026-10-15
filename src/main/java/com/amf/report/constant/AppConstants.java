@@ -29,8 +29,6 @@ public final class AppConstants {
     public static final List<String> ORGANIZATION_REPORT_HEADERS = List.of("Organization Name", "CIDN");
     public static final int ORGANIZATION_NAME_COLUMN_WIDTH = 45 * 256;
     public static final int CIDN_COLUMN_WIDTH = 20 * 256;
-    public static final String XLSX_CONTENT_TYPE =
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     public static final ParameterizedTypeReference<List<OrganizationDto>> ORGANIZATION_LIST =
             new ParameterizedTypeReference<>() {};
