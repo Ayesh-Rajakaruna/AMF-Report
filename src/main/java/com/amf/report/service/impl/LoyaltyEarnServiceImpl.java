@@ -72,10 +72,10 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
 
         Map<String, String> policyNameById = loadPolicyNames();
         Map<String, MemberInfo> memberById = loadMembers();
-        Map<String, BigDecimal> totalBalanceByAccount = loadTotalBalances();
+        Map<String, BigDecimal> totalBalanceByCidn = loadTotalBalances();
 
         List<LoyaltyEarnRecord> records = monthlyOrUpfront.stream()
-                .map(earn -> toEntity(earn, policyNameById, memberById, totalBalanceByAccount))
+                .map(earn -> toEntity(earn, policyNameById, memberById, totalBalanceByCidn))
                 .toList();
 
         List<LoyaltyEarnRecord> saved = loyaltyEarnRecordRepository.saveAll(records);
@@ -112,28 +112,24 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     }
 
     /**
-     * Account -> sum of UpfrontBalanceTotal + EarningBalanceTotal + ManualCreditBalanceTotal.
-     * Keyed by relatedAccount.id (the loyaltyProgramMember id) and also by relatedAccount.name,
-     * so a record can be matched by member id or by CIDN.
+     * CIDN (loyaltyAccountBalance relatedAccount.name) -> total balance, where total balance is
+     * UpfrontBalanceTotal + EarningBalanceTotal + ManualCreditBalanceTotal for that CIDN.
      */
     Map<String, BigDecimal> loadTotalBalances() {
-        Map<String, BigDecimal> totalByAccount = new HashMap<>();
+        Map<String, BigDecimal> totalBalanceByCidn = new HashMap<>();
         for (LoyaltyAccountBalanceDto balance : fetchList(loyaltyAccountBalanceUrl, ACCOUNT_BALANCE_LIST)) {
             if (balance == null || balance.getRelatedAccount() == null || balance.getAmount() == null
                     || balance.getAmount().getValue() == null
                     || !TOTAL_BALANCE_TYPES.contains(balance.getBalanceType())) {
                 continue;
             }
-            BigDecimal amount = balance.getAmount().getValue();
-            String accountName = balance.getRelatedAccount().getName();
-            BigDecimal totalAmount = totalByAccount.get(accountName);
-            BigDecimal sumOfAmount = amount;
-            if(totalAmount != null){
-                sumOfAmount = sumOfAmount + totalAmount
+            String cidn = balance.getRelatedAccount().getName();
+            if (StringUtils.hasText(cidn)) {
+                totalBalanceByCidn.merge(cidn.trim(), balance.getAmount().getValue(), BigDecimal::add);
             }
         }
-        log.info("Loaded total balance(s) for {} account key(s)", totalByAccount.size());
-        return totalByAccount;
+        log.info("Loaded total balance for {} CIDN(s)", totalBalanceByCidn.size());
+        return totalBalanceByCidn;
     }
 
     /** CIDN from the member's "CIDN" characteristic, falling back to the first characteristic value. */
@@ -168,16 +164,13 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     private LoyaltyEarnRecord toEntity(LoyaltyEarnDto loyaltyEarn,
                                       Map<String, String> policyNameById,
                                       Map<String, MemberInfo> memberById,
-                                      Map<String, BigDecimal> totalBalanceByAccount) {
+                                      Map<String, BigDecimal> totalBalanceByCidn) {
         String policyId = loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID);
         String memberId = extractLoyaltyProgramMemberId(loyaltyEarn);
         MemberInfo member = memberId == null ? null : memberById.get(memberId);
         String cidn = member == null ? null : member.cidn();
 
-        BigDecimal totalBalance = memberId == null ? null : totalBalanceByAccount.get(memberId);
-        if (totalBalance == null && cidn != null) {
-            totalBalance = totalBalanceByAccount.get(cidn);
-        }
+        BigDecimal totalBalance = cidn == null ? null : totalBalanceByCidn.get(cidn.trim());
 
         return LoyaltyEarnRecord.builder()
                 .planContribution(extractPlanContribution(loyaltyEarn))
