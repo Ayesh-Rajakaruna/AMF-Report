@@ -12,9 +12,36 @@ loyalty:
     loyalty-program-member-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyProgramMember
     loyalty-account-balance-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyAccountBalance?balanceType=UpfrontBalanceTotal&balanceType=EarningBalanceTotal&balanceType=ManualCreditBalanceTotal
 
+# Product group -> organization report (Organization Name, CIDN)
+product-group:
+  api:
+    base-urls:
+      DEV: https://dev-orderexpress.08894fb17d.sdpamp.com
+      QA: https://qa-orderexpress.08894fb17d.sdpamp.com
+      PREPROD: https://preprod-api.orderexchange.telstra.com.au
+      PROD: https://prod-api.orderexchange.telstra.com.au
+    product-group-path: /journey-service-product-journey/product-journey/product/groups/{productGroupId}
+    organization-path: /tox-tx-layer-party-mgt/tmf-api/partyManagement/v5/organization
+    organization-chunk-threshold: 30   # more ids than this -> call the organization API in chunks
+    organization-chunk-size: 25
+
 report:
   output-dir: reports
 
 http:
   proxy:
-    password: 15Wimantha@1997
+    enabled: ${PROXY_ENABLED:true}
+    scheme: http
+    host: http-gw.tcif.telstra.com.au
+    port: 8080
+    username: ${PROXY_USERNAME:e045577}
+    password: ${PROXY_PASSWORD:}        # never commit the password; set the PROXY_PASSWORD environment variable
+  timeout:
+    connect-seconds: 30
+    read-seconds: 60
+
+# Optional custom trust store, e.g. classpath:truststore.jks or file:C:/certs/truststore.jks
+# Leave empty to use the JVM's default trust store.
+trust:
+  store: ${TRUST_STORE:}
+  password: ${TRUST_STORE_PASSWORD:}

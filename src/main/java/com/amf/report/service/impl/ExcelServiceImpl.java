@@ -1,19 +1,27 @@
 package com.amf.report.service.impl;
 
+import com.amf.report.dto.OrganizationReportRecord;
 import com.amf.report.excel.LoyaltyEarnRecordExcelWriter;
+import com.amf.report.excel.OrganizationReportExcelWriter;
+import com.amf.report.exception.ExcelGenerationException;
 import com.amf.report.service.ExcelService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static com.amf.report.constant.AppConstants.EXCEL_FILE_EXTENSION;
 import static com.amf.report.constant.AppConstants.EXCEL_FILE_TIMESTAMP_PATTERN;
 import static com.amf.report.constant.AppConstants.LOYALTY_EARN_RECORD_NAME;
 
+@Slf4j
 @Service
 public class ExcelServiceImpl implements ExcelService {
     private static final DateTimeFormatter FILE_TIMESTAMP =
@@ -30,5 +38,23 @@ public class ExcelServiceImpl implements ExcelService {
         Path file = outputDir.resolve(
                 LOYALTY_EARN_RECORD_NAME + "_" + LocalDateTime.now().format(FILE_TIMESTAMP) + EXCEL_FILE_EXTENSION);
         return new LoyaltyEarnRecordExcelWriter(file);
+    }
+
+    @Override
+    public byte[] createOrganizationReport(List<OrganizationReportRecord> records) {
+        return OrganizationReportExcelWriter.write(records);
+    }
+
+    @Override
+    public Path saveReport(String fileName, byte[] content) {
+        Path file = outputDir.resolve(fileName);
+        try {
+            Files.createDirectories(file.toAbsolutePath().getParent());
+            Files.write(file, content);
+            log.info("Saved report {}", file.toAbsolutePath());
+            return file;
+        } catch (IOException ex) {
+            throw new ExcelGenerationException("Failed to write Excel file " + file + ": " + ex.getMessage(), ex);
+        }
     }
 }

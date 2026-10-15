@@ -3,19 +3,37 @@ package com.amf.report.constant;
 import com.amf.report.dto.LoyaltyAccountBalanceDto;
 import com.amf.report.dto.LoyaltyEarnDto;
 import com.amf.report.dto.LoyaltyRuleDto;
+import com.amf.report.dto.OrganizationDto;
 import com.amf.report.dto.ProgramMemberDto;
 import org.springframework.core.ParameterizedTypeReference;
 
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public final class AppConstants {
     private AppConstants() {
     }
 
-    public static final String PROXY_HOST = "http-gw.tcif.telstra.com.au";
-    public static final int PROXY_PORT = 8080;
-    public static final String PROXY_USERNAME = "e045577";
+    // Proxy host/port/credentials are configured in application.yml (http.proxy.*)
+
+    // ---------- Product group -> organization report ----------
+    public static final Pattern PRODUCT_GROUP_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,128}$");
+    public static final String PRODUCT_GROUP_ID_VARIABLE = "productGroupId";
+    public static final String QUERY_PARAM_ID = "id";
+    public static final String QUERY_PARAM_FIELDS = "fields";
+    public static final List<String> ORGANIZATION_FIELDS = List.of("name", "partyCharacteristic");
+
+    public static final String ORGANIZATION_REPORT_NAME = "OrganizationReport";
+    public static final String ORGANIZATION_REPORT_SHEET = "Organizations";
+    public static final List<String> ORGANIZATION_REPORT_HEADERS = List.of("Organization Name", "CIDN");
+    public static final int ORGANIZATION_NAME_COLUMN_WIDTH = 45 * 256;
+    public static final int CIDN_COLUMN_WIDTH = 20 * 256;
+    public static final String XLSX_CONTENT_TYPE =
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    public static final ParameterizedTypeReference<List<OrganizationDto>> ORGANIZATION_LIST =
+            new ParameterizedTypeReference<>() {};
 
     public static final String CHARACTERISTIC_EARNING_TYPE = "EarningType";
     public static final String CHARACTERISTIC_POLICY_ID = "PolicyId";
