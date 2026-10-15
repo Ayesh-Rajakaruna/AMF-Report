@@ -1,14 +1,3 @@
-/**
- * Copyrights 2023 Axiata Digital Labs Pvt Ltd.
- * All Rights Reserved.
- * <p>
- * These material are unpublished, proprietary, confidential source
- * code of Axiata Digital Labs Pvt Ltd (ADL) and constitute a TRADE
- * SECRET of ADL.
- * <p>
- * ADL retains all title to and intellectual property rights in these
- * materials.
- */
 package com.amf.report.config;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,15 +29,10 @@ import javax.net.ssl.SSLContext;
 import java.io.InputStream;
 import java.security.KeyStore;
 
-/**
- * HTTP client beans. Proxy, timeouts and trust store all come from application.yml,
- * so no host, user name or password is hard-coded here.
- */
 @Slf4j
 @Configuration
 @EnableConfigurationProperties(ProductGroupApiProperties.class)
 public class BeanConfig {
-
     @Value("${http.proxy.enabled:true}")
     private boolean proxyEnabled;
 
@@ -132,10 +116,6 @@ public class BeanConfig {
         return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
     }
 
-    /**
-     * Builds an SSLContext from trust.store when it is configured; otherwise returns null
-     * and the JVM's default trust store is used.
-     */
     private SSLContext buildSslContext(ResourceLoader resourceLoader) {
         if (!StringUtils.hasText(trustStore)) {
             return null;

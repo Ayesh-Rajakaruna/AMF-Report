@@ -8,9 +8,6 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-/**
- * Environments the report can run against. The base URL for each one is in application.yml.
- */
 @Getter
 @RequiredArgsConstructor
 public enum ReportEnvironment {
@@ -21,9 +18,6 @@ public enum ReportEnvironment {
 
     private final String label;
 
-    /**
-     * Accepts "DEV", "dev", "Pre Prod", "pre-prod", "PRE_PROD" etc.
-     */
     public static ReportEnvironment fromValue(String value) {
         if (value == null || value.isBlank()) {
             throw new InvalidRequestException("environment is required. Allowed values: " + allowedValues());

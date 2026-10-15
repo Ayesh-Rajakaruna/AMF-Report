@@ -3,9 +3,6 @@ package com.amf.report.dto;
 import com.amf.report.constant.ReportEnvironment;
 import lombok.Builder;
 
-/**
- * A generated organization report held in memory before it is saved to disk.
- */
 @Builder
 public record OrganizationReportFile(
         ReportEnvironment environment,

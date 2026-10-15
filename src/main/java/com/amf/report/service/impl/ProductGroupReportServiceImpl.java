@@ -77,7 +77,6 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
 
         Map<String, OrganizationDto> organizationById = loadOrganizations(baseUrl, addedCustomers);
 
-        // One row per addedCustomers entry, in the same order (row count = addedCustomers size)
         List<OrganizationReportRecord> records = addedCustomers.stream()
                 .map(customerId -> toRecord(customerId, organizationById))
                 .toList();
@@ -101,8 +100,6 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
                 .build();
     }
 
-    // ---------------- API calls ----------------
-
     ProductGroupDto loadProductGroup(String baseUrl, String productGroupId) {
         String url = UriComponentsBuilder.fromUriString(baseUrl)
                 .path(apiProperties.productGroupPath())
@@ -120,7 +117,7 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
         List<String> uniqueIds = customerIds.stream()
                 .filter(StringUtils::hasText)
                 .map(String::trim)
-                .distinct() // keeps the original order
+                .distinct()
                 .toList();
 
         Map<String, OrganizationDto> organizationById = new HashMap<>();
@@ -128,7 +125,6 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
             return organizationById;
         }
 
-        // More than the threshold -> call the API chunk by chunk
         List<List<String>> batches = uniqueIds.size() > apiProperties.organizationChunkThreshold()
                 ? partition(uniqueIds, apiProperties.organizationChunkSize())
                 : List.of(uniqueIds);
@@ -154,8 +150,6 @@ public class ProductGroupReportServiceImpl implements ProductGroupReportService 
         }
         return organizationById;
     }
-
-    // ---------------- Helpers ----------------
 
     private OrganizationReportRecord toRecord(String customerId, Map<String, OrganizationDto> organizationById) {
         OrganizationDto organization = StringUtils.hasText(customerId) ? organizationById.get(customerId.trim()) : null;

@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * One item of GET /tox-tx-layer-party-mgt/tmf-api/partyManagement/v5/organization?id=..&fields=name&fields=partyCharacteristic
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -15,14 +15,13 @@ public final class AppConstants {
     private AppConstants() {
     }
 
-    // Proxy host/port/credentials are configured in application.yml (http.proxy.*)
-
-    // ---------- Product group -> organization report ----------
     public static final Pattern PRODUCT_GROUP_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,128}$");
     public static final String PRODUCT_GROUP_ID_VARIABLE = "productGroupId";
     public static final String QUERY_PARAM_ID = "id";
     public static final String QUERY_PARAM_FIELDS = "fields";
     public static final List<String> ORGANIZATION_FIELDS = List.of("name", "partyCharacteristic");
+
+    public static final String DEFAULT_REPORT_ENVIRONMENT = "PROD";
 
     public static final String ORGANIZATION_REPORT_NAME = "OrganizationReport";
     public static final String ORGANIZATION_REPORT_SHEET = "Organizations";

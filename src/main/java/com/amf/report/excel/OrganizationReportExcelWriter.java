@@ -19,9 +19,6 @@ import static com.amf.report.constant.AppConstants.ORGANIZATION_NAME_COLUMN_WIDT
 import static com.amf.report.constant.AppConstants.ORGANIZATION_REPORT_HEADERS;
 import static com.amf.report.constant.AppConstants.ORGANIZATION_REPORT_SHEET;
 
-/**
- * Writes the organization report: one sheet, columns "Organization Name" and "CIDN".
- */
 public final class OrganizationReportExcelWriter {
     private static final String TEXT_FORMAT = "@";
 
@@ -31,11 +28,9 @@ public final class OrganizationReportExcelWriter {
     public static byte[] write(List<OrganizationReportRecord> records) {
         try (XSSFWorkbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-
             Sheet sheet = workbook.createSheet(ORGANIZATION_REPORT_SHEET);
             writeHeader(workbook, sheet);
 
-            // CIDN is written as text so long numbers and leading zeros are kept
             DataFormat dataFormat = workbook.createDataFormat();
             CellStyle textStyle = workbook.createCellStyle();
             textStyle.setDataFormat(dataFormat.getFormat(TEXT_FORMAT));

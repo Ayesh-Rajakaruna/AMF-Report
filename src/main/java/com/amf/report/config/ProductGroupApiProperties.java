@@ -7,9 +7,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
-/**
- * Product group / organization API settings from application.yml (product-group.api.*).
- */
 @ConfigurationProperties(prefix = "product-group.api")
 public record ProductGroupApiProperties(
         Map<ReportEnvironment, String> baseUrls,
@@ -17,7 +14,6 @@ public record ProductGroupApiProperties(
         String organizationPath,
         int organizationChunkThreshold,
         int organizationChunkSize) {
-
     private static final int DEFAULT_CHUNK_THRESHOLD = 30;
     private static final int DEFAULT_CHUNK_SIZE = 25;
 

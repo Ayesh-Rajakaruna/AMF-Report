@@ -8,10 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * Response of GET /journey-service-product-journey/product-journey/product/groups/{productGroupId}.
- * Only the fields the report needs are mapped.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
