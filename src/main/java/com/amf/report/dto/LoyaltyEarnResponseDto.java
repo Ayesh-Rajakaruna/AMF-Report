@@ -15,8 +15,6 @@ import java.time.LocalDateTime;
 public class LoyaltyEarnResponseDto {
     private Long id;
     private BigDecimal planContribution;
-    private String policyId;
-    private String loyaltyProgramMember;
     private String earningType;
     private String policyName;
     private String organizationName;

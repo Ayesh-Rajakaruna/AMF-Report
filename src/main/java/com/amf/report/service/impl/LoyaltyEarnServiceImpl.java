@@ -2,6 +2,7 @@ package com.amf.report.service.impl;
 
 import com.amf.report.dto.CharacteristicDto;
 import com.amf.report.dto.LoyaltyAccountBalanceDto;
+import com.amf.report.dto.LoyaltyEarnData;
 import com.amf.report.dto.LoyaltyEarnDto;
 import com.amf.report.dto.LoyaltyEarnResponseDto;
 import com.amf.report.dto.LoyaltyRuleDto;
@@ -61,25 +62,47 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     @Override
     @Transactional
     public List<LoyaltyEarnResponseDto> syncLoyaltyEarnsFromApi() {
-        List<LoyaltyEarnDto> loyaltyEarns = fetchList(loyaltyEarnUrl, LOYALTY_EARN_LIST);
-        List<LoyaltyEarnDto> monthlyOrUpfront = loyaltyEarns.stream()
-                .filter(Objects::nonNull)
-                .filter(this::isMonthlyOrUpfront)
-                .toList();
-        log.info("loyaltyEarn API returned {} record(s); {} are Monthly/Upfront",
-                loyaltyEarns.size(), monthlyOrUpfront.size());
+        List<LoyaltyEarnData> loyaltyEarns = loadMonthlyOrUpfrontEarns();
 
         Map<String, String> policyNameById = loadPolicyNames();
         Map<String, Pair<String, String>> memberById = loadMembers();
         Map<String, BigDecimal> totalBalanceByCidn = loadTotalBalances();
 
-        List<LoyaltyEarnRecord> records = monthlyOrUpfront.stream()
+        List<LoyaltyEarnRecord> records = loyaltyEarns.stream()
                 .map(earn -> toEntity(earn, policyNameById, memberById, totalBalanceByCidn))
                 .toList();
 
         List<LoyaltyEarnRecord> saved = loyaltyEarnRecordRepository.saveAll(records);
         log.info("Saved {} loyaltyEarn record(s) to MySQL", saved.size());
         return saved.stream().map(this::toResponse).toList();
+    }
+
+    List<LoyaltyEarnData> loadMonthlyOrUpfrontEarns() {
+        List<LoyaltyEarnDto> response = fetchList(loyaltyEarnUrl, LOYALTY_EARN_LIST);
+        List<LoyaltyEarnData> loyaltyEarns = toMonthlyOrUpfrontEarns(response);
+        log.info("loyaltyEarn API returned {} record(s); {} are Monthly/Upfront",
+                response.size(), loyaltyEarns.size());
+        return loyaltyEarns;
+    }
+
+    List<LoyaltyEarnData> toMonthlyOrUpfrontEarns(List<LoyaltyEarnDto> loyaltyEarns) {
+        return loyaltyEarns.stream()
+                .filter(Objects::nonNull)
+                .map(this::toLoyaltyEarnData)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private LoyaltyEarnData toLoyaltyEarnData(LoyaltyEarnDto loyaltyEarn) {
+        String earningType = normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE));
+        if (earningType == null) {
+            return null;
+        }
+        return new LoyaltyEarnData(
+                extractPlanContribution(loyaltyEarn),
+                loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID),
+                extractLoyaltyProgramMemberId(loyaltyEarn),
+                earningType);
     }
 
     Map<String, String> loadPolicyNames() {
@@ -130,10 +153,6 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         return Optional.ofNullable(httpService.get(url, type)).orElse(Collections.emptyList());
     }
 
-    private boolean isMonthlyOrUpfront(LoyaltyEarnDto loyaltyEarn) {
-        return normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE)) != null;
-    }
-
     private String normalizeEarningType(String earningType) {
         if (earningType == null) {
             return null;
@@ -144,19 +163,19 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
                 .orElse(null);
     }
 
-    private LoyaltyEarnRecord toEntity(LoyaltyEarnDto loyaltyEarn,
+    private LoyaltyEarnRecord toEntity(LoyaltyEarnData loyaltyEarn,
                                       Map<String, String> policyNameById,
                                       Map<String, Pair<String, String>> memberById,
                                       Map<String, BigDecimal> totalBalanceByCidn) {
-        String policyId = loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID);
-        String memberId = extractLoyaltyProgramMemberId(loyaltyEarn);
+        String policyId = loyaltyEarn.policyId();
+        String memberId = loyaltyEarn.memberId();
         Pair<String, String> member = memberId == null ? null : memberById.get(memberId);
         String cidn = member == null ? null : member.getRight();
-
         BigDecimal totalBalance = cidn == null ? null : totalBalanceByCidn.get(cidn.trim());
+
         return LoyaltyEarnRecord.builder()
-                .planContribution(extractPlanContribution(loyaltyEarn))
-                .earningType(normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE)))
+                .planContribution(loyaltyEarn.planContribution())
+                .earningType(loyaltyEarn.earningType())
                 .policyName(policyId == null ? null : policyNameById.get(policyId))
                 .organizationName(member == null ? null : member.getLeft())
                 .cidn(cidn)

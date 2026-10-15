@@ -3,6 +3,7 @@ package com.amf.report.service.impl;
 import com.amf.report.dto.LoyaltyEarnDto;
 import com.amf.report.dto.CharacteristicDto;
 import com.amf.report.dto.LoyaltyAccountBalanceDto;
+import com.amf.report.dto.LoyaltyEarnData;
 import com.amf.report.dto.LoyaltyRuleDto;
 import com.amf.report.dto.ProgramMemberDto;
 import com.amf.report.dto.LoyaltyEarnResponseDto;
@@ -23,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -104,7 +106,7 @@ class LoyaltyEarnServiceImplTest {
     }
 
     @Test
-    void sync_mapsAllFieldsIncludingEarningTypeAndPolicyIdFromCharacteristics() {
+    void sync_mapsPlanContributionAndEarningType() {
         apiReturns(List.of(loyaltyEarn("13.825570", "Monthly", "POL-1", "LPM-1")));
         saveAllReturnsInput();
 
@@ -112,8 +114,6 @@ class LoyaltyEarnServiceImplTest {
 
         LoyaltyEarnRecord saved = captureSaved().get(0);
         assertThat(saved.getPlanContribution()).isEqualByComparingTo("13.825570");
-        assertThat(saved.getPolicyId()).isEqualTo("POL-1");
-        assertThat(saved.getLoyaltyProgramMember()).isEqualTo("LPM-1");
         assertThat(saved.getEarningType()).isEqualTo("Monthly");
         assertThat(result.get(0).getEarningType()).isEqualTo("Monthly");
     }
@@ -132,8 +132,9 @@ class LoyaltyEarnServiceImplTest {
         assertThat(captureSaved())
                 .extracting(LoyaltyEarnRecord::getEarningType)
                 .containsExactly("Monthly", "Upfront");
-        assertThat(result).extracting(LoyaltyEarnResponseDto::getPolicyId)
-                .containsExactly("POL-1", "POL-2");
+        assertThat(result).extracting(LoyaltyEarnResponseDto::getPlanContribution)
+                .usingElementComparator(BigDecimal::compareTo)
+                .containsExactly(new BigDecimal("10"), new BigDecimal("20"));
     }
 
     @Test
@@ -154,8 +155,8 @@ class LoyaltyEarnServiceImplTest {
         LoyaltyEarnResponseDto result = service.syncLoyaltyEarnsFromApi().get(0);
 
         assertThat(result.getPlanContribution()).isNull();
-        assertThat(result.getPolicyId()).isNull();
-        assertThat(result.getLoyaltyProgramMember()).isNull();
+        assertThat(result.getPolicyName()).isNull();
+        assertThat(result.getOrganizationName()).isNull();
         assertThat(result.getEarningType()).isEqualTo("Upfront");
     }
 
@@ -272,5 +273,16 @@ class LoyaltyEarnServiceImplTest {
         service.syncLoyaltyEarnsFromApi();
 
         assertThat(captureSaved().get(0).getTotalBalance()).isNull();
+    }
+
+    @Test
+    void toMonthlyOrUpfrontEarns_keepsOnlyNeededFields() {
+        List<LoyaltyEarnData> result = service.toMonthlyOrUpfrontEarns(Arrays.asList(
+                loyaltyEarn("13.5", "Monthly", "POL-1", "LPM-1"),
+                loyaltyEarn("7", "ManualCredit", "POL-2", "LPM-2"),
+                null));
+
+        assertThat(result).containsExactly(
+                new LoyaltyEarnData(new BigDecimal("13.5"), "POL-1", "LPM-1", "Monthly"));
     }
 }

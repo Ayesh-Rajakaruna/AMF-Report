@@ -22,7 +22,6 @@ public class LoyaltyEarnRecord {
     @Column(name = "plan_contribution", precision = 19, scale = 2)
     private BigDecimal planContribution;
 
-    /** usageCharacteristic "EarningType" - Monthly or Upfront */
     @Column(name = "earning_type", length = 20)
     private String earningType;
 
