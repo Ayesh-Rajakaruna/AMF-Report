@@ -17,7 +17,7 @@ import java.math.BigDecimal;
  *   "amount": { "unit": "AUD", "value": 6402.11 }
  * }
  * </pre>
- * {@code relatedAccount.id} is the loyaltyProgramMember id.
+ * {@code relatedAccount.name} is the CIDN; balances are summed per CIDN.
  */
 @Data
 @NoArgsConstructor

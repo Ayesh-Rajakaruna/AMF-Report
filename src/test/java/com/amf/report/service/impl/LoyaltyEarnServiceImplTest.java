@@ -228,7 +228,7 @@ class LoyaltyEarnServiceImplTest {
     }
 
     @Test
-    void sync_totalBalanceMatchedByCidnWhenAccountIdDiffers() {
+    void sync_totalBalanceSummedPerCidn() {
         apiReturns(List.of(loyaltyEarn("10", "Upfront", "POL-1", "LPM-1")));
         stubGet(PROGRAM_MEMBER_URL, List.of(ProgramMemberDto.builder()
                 .id("LPM-1").name("Acme")
@@ -256,5 +256,22 @@ class LoyaltyEarnServiceImplTest {
         assertThat(saved.getOrganizationName()).isNull();
         assertThat(saved.getCidn()).isNull();
         assertThat(saved.getTotalBalance()).isNull();
+    }
+
+    @Test
+    void sync_totalBalanceIgnoresRelatedAccountId() {
+        apiReturns(List.of(loyaltyEarn("10", "Upfront", "POL-1", "LPM-1")));
+        stubGet(PROGRAM_MEMBER_URL, List.of(ProgramMemberDto.builder()
+                .id("LPM-1").name("Acme")
+                .characteristic(List.of(new CharacteristicDto("CIDN", "6781234778")))
+                .build()));
+        // account id matches the member id, but the CIDN (name) is different -> no match
+        stubGet(ACCOUNT_BALANCE_URL, List.of(
+                balance("UpfrontBalanceTotal", "LPM-1", "9999999999", "100")));
+        saveAllReturnsInput();
+
+        service.syncLoyaltyEarnsFromApi();
+
+        assertThat(captureSaved().get(0).getTotalBalance()).isNull();
     }
 }
