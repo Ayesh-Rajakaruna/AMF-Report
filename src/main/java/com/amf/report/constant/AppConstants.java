@@ -34,6 +34,8 @@ public final class AppConstants {
     public static final Set<String> TOTAL_BALANCE_TYPES = Set.of(
             BALANCE_TYPE_UPFRONT_TOTAL, BALANCE_TYPE_EARNING_TOTAL, BALANCE_TYPE_MANUAL_CREDIT_TOTAL);
 
+    public static final int SYNC_BATCH_SIZE = 1000;
+
     public static final String LOYALTY_EARN_RECORD_NAME = "LoyaltyEarnRecord";
     public static final String EXCEL_FILE_EXTENSION = ".xlsx";
     public static final String EXCEL_FILE_TIMESTAMP_PATTERN = "yyyyMMdd_HHmmss";

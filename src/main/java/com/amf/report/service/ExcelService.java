@@ -1,10 +1,7 @@
 package com.amf.report.service;
 
-import com.amf.report.entity.LoyaltyEarnRecord;
-
-import java.nio.file.Path;
-import java.util.List;
+import com.amf.report.excel.LoyaltyEarnRecordExcelWriter;
 
 public interface ExcelService {
-    Path writeLoyaltyEarnRecords(List<LoyaltyEarnRecord> records);
+    LoyaltyEarnRecordExcelWriter openLoyaltyEarnRecordWriter();
 }

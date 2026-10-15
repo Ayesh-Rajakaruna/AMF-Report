@@ -1,6 +1,7 @@
 package com.amf.report.service.impl;
 
 import com.amf.report.entity.LoyaltyEarnRecord;
+import com.amf.report.excel.LoyaltyEarnRecordExcelWriter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -22,10 +23,10 @@ class ExcelServiceImplTest {
     Path tempDir;
 
     @Test
-    void writeLoyaltyEarnRecords_writesHeaderAndRows() throws Exception {
+    void writer_appendsBatchesIntoOneFile() throws Exception {
         Path outputDir = tempDir.resolve("reports");
         ExcelServiceImpl excelService = new ExcelServiceImpl(outputDir.toString());
-        LoyaltyEarnRecord record = LoyaltyEarnRecord.builder()
+        LoyaltyEarnRecord full = LoyaltyEarnRecord.builder()
                 .id("LE-1")
                 .planContribution(new BigDecimal("13.825570"))
                 .earningType("Monthly")
@@ -36,8 +37,15 @@ class ExcelServiceImplTest {
                 .createdAt(LocalDateTime.of(2026, 10, 15, 9, 40))
                 .build();
         LoyaltyEarnRecord sparse = LoyaltyEarnRecord.builder().id("LE-2").earningType("Upfront").build();
+        LoyaltyEarnRecord third = LoyaltyEarnRecord.builder().id("LE-3").earningType("Monthly").build();
 
-        Path file = excelService.writeLoyaltyEarnRecords(List.of(record, sparse));
+        Path file;
+        try (LoyaltyEarnRecordExcelWriter writer = excelService.openLoyaltyEarnRecordWriter()) {
+            writer.append(List.of(full, sparse));
+            writer.append(List.of(third));
+            assertThat(writer.getRecordCount()).isEqualTo(3);
+            file = writer.finish();
+        }
 
         assertThat(file).exists();
         assertThat(file.getParent()).isEqualTo(outputDir);
@@ -46,7 +54,7 @@ class ExcelServiceImplTest {
         try (InputStream in = Files.newInputStream(file); XSSFWorkbook workbook = new XSSFWorkbook(in)) {
             Sheet sheet = workbook.getSheet("LoyaltyEarnRecord");
             assertThat(sheet).isNotNull();
-            assertThat(sheet.getLastRowNum()).isEqualTo(2);
+            assertThat(sheet.getLastRowNum()).isEqualTo(3);
 
             Row header = sheet.getRow(0);
             assertThat(header.getCell(0).getStringCellValue()).isEqualTo("ID");
@@ -65,15 +73,19 @@ class ExcelServiceImplTest {
             Row sparseRow = sheet.getRow(2);
             assertThat(sparseRow.getCell(0).getStringCellValue()).isEqualTo("LE-2");
             assertThat(sparseRow.getCell(1)).isNull();
-            assertThat(sparseRow.getCell(2).getStringCellValue()).isEqualTo("Upfront");
+
+            assertThat(sheet.getRow(3).getCell(0).getStringCellValue()).isEqualTo("LE-3");
         }
     }
 
     @Test
-    void writeLoyaltyEarnRecords_emptyList_writesHeaderOnly() throws Exception {
+    void writer_withNoRows_writesHeaderOnly() throws Exception {
         ExcelServiceImpl excelService = new ExcelServiceImpl(tempDir.toString());
 
-        Path file = excelService.writeLoyaltyEarnRecords(List.of());
+        Path file;
+        try (LoyaltyEarnRecordExcelWriter writer = excelService.openLoyaltyEarnRecordWriter()) {
+            file = writer.finish();
+        }
 
         try (InputStream in = Files.newInputStream(file); XSSFWorkbook workbook = new XSSFWorkbook(in)) {
             assertThat(workbook.getSheet("LoyaltyEarnRecord").getLastRowNum()).isZero();

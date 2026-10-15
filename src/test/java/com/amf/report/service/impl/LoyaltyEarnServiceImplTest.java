@@ -8,6 +8,8 @@ import com.amf.report.dto.LoyaltyRuleDto;
 import com.amf.report.dto.ProgramMemberDto;
 import com.amf.report.dto.LoyaltyEarnResponseDto;
 import com.amf.report.entity.LoyaltyEarnRecord;
+import com.amf.report.excel.LoyaltyEarnRecordExcelWriter;
+import jakarta.persistence.EntityManager;
 import com.amf.report.repository.LoyaltyEarnRecordRepository;
 import com.amf.report.service.ExcelService;
 import com.amf.report.service.HttpService;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -34,6 +37,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,6 +60,12 @@ class LoyaltyEarnServiceImplTest {
     @Mock
     private ExcelService excelService;
 
+    @Mock
+    private EntityManager entityManager;
+
+    @Mock
+    private LoyaltyEarnRecordExcelWriter excelWriter;
+
     @Spy
     private ModelMapper modelMapper = new ModelMapper();
 
@@ -61,6 +74,7 @@ class LoyaltyEarnServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(excelService.openLoyaltyEarnRecordWriter()).thenReturn(excelWriter);
         ReflectionTestUtils.setField(service, "loyaltyEarnUrl", LOYALTY_EARN_URL);
         ReflectionTestUtils.setField(service, "loyaltyRuleUrl", LOYALTY_RULE_URL);
         ReflectionTestUtils.setField(service, "loyaltyProgramMemberUrl", PROGRAM_MEMBER_URL);
@@ -174,27 +188,25 @@ class LoyaltyEarnServiceImplTest {
     @Test
     void sync_recordWithoutCharacteristics_isSkipped() {
         apiReturns(List.of(LoyaltyEarnDto.builder().id("LE-1").build()));
-        saveAllReturnsInput();
 
         assertThat(service.syncLoyaltyEarnsFromApi()).isEmpty();
-        assertThat(captureSaved()).isEmpty();
+        verify(repository, never()).saveAll(anyList());
     }
 
     @Test
     void sync_emptyApiResponse_savesNothing() {
         apiReturns(Collections.emptyList());
-        saveAllReturnsInput();
 
         assertThat(service.syncLoyaltyEarnsFromApi()).isEmpty();
-        assertThat(captureSaved()).isEmpty();
+        verify(repository, never()).saveAll(anyList());
     }
 
     @Test
     void sync_nullApiBody_savesNothing() {
         apiReturns(null);
-        saveAllReturnsInput();
 
         assertThat(service.syncLoyaltyEarnsFromApi()).isEmpty();
+        verify(repository, never()).saveAll(anyList());
     }
 
     @Test
@@ -310,6 +322,50 @@ class LoyaltyEarnServiceImplTest {
         service.syncLoyaltyEarnsFromApi();
 
         List<LoyaltyEarnRecord> saved = captureSaved();
-        verify(excelService).writeLoyaltyEarnRecords(saved);
+        InOrder inOrder = inOrder(repository, entityManager, excelWriter);
+        inOrder.verify(repository).saveAll(saved);
+        inOrder.verify(entityManager).flush();
+        inOrder.verify(excelWriter).append(saved);
+        inOrder.verify(entityManager).clear();
+        inOrder.verify(excelWriter).finish();
+        inOrder.verify(excelWriter).close();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void sync_savesAndWritesExcelInBatchesOf1000() {
+        List<LoyaltyEarnDto> earns = new ArrayList<>();
+        for (int i = 0; i < 2500; i++) {
+            earns.add(loyaltyEarn("1", "Monthly", "POL-1", "LPM-1"));
+        }
+        apiReturns(earns);
+        saveAllReturnsInput();
+
+        List<LoyaltyEarnResponseDto> result = service.syncLoyaltyEarnsFromApi();
+
+        ArgumentCaptor<List<LoyaltyEarnRecord>> saveCaptor = ArgumentCaptor.forClass(List.class);
+        verify(repository, times(3)).saveAll(saveCaptor.capture());
+        assertThat(saveCaptor.getAllValues()).extracting(List::size).containsExactly(1000, 1000, 500);
+
+        ArgumentCaptor<List<LoyaltyEarnRecord>> excelCaptor = ArgumentCaptor.forClass(List.class);
+        verify(excelWriter, times(3)).append(excelCaptor.capture());
+        assertThat(excelCaptor.getAllValues()).extracting(List::size).containsExactly(1000, 1000, 500);
+
+        verify(entityManager, times(3)).flush();
+        verify(entityManager, times(3)).clear();
+        verify(excelWriter).finish();
+        assertThat(result).hasSize(2500);
+    }
+
+    @Test
+    void sync_noRecords_stillWritesExcelWithHeaderOnly() {
+        apiReturns(Collections.emptyList());
+
+        assertThat(service.syncLoyaltyEarnsFromApi()).isEmpty();
+
+        verify(repository, never()).saveAll(anyList());
+        verify(excelWriter, never()).append(anyList());
+        verify(excelWriter).finish();
+        verify(excelWriter).close();
     }
 }
