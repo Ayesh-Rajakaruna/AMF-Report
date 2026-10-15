@@ -31,7 +31,7 @@ import java.security.KeyStore;
 
 @Slf4j
 @Configuration
-@EnableConfigurationProperties(ProductGroupApiProperties.class)
+@EnableConfigurationProperties({ProductGroupApiProperties.class, LoyaltyApiProperties.class})
 public class BeanConfig {
     @Value("${http.proxy.enabled:true}")
     private boolean proxyEnabled;

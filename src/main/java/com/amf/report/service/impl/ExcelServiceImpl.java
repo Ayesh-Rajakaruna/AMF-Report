@@ -1,5 +1,6 @@
 package com.amf.report.service.impl;
 
+import com.amf.report.constant.ReportEnvironment;
 import com.amf.report.dto.OrganizationReportRecord;
 import com.amf.report.excel.LoyaltyEarnRecordExcelWriter;
 import com.amf.report.excel.OrganizationReportExcelWriter;
@@ -34,9 +35,9 @@ public class ExcelServiceImpl implements ExcelService {
     }
 
     @Override
-    public LoyaltyEarnRecordExcelWriter openLoyaltyEarnRecordWriter() {
-        Path file = outputDir.resolve(
-                LOYALTY_EARN_RECORD_NAME + "_" + LocalDateTime.now().format(FILE_TIMESTAMP) + EXCEL_FILE_EXTENSION);
+    public LoyaltyEarnRecordExcelWriter openLoyaltyEarnRecordWriter(ReportEnvironment environment) {
+        Path file = outputDir.resolve(LOYALTY_EARN_RECORD_NAME + "_" + environment.name() + "_"
+                + LocalDateTime.now().format(FILE_TIMESTAMP) + EXCEL_FILE_EXTENSION);
         return new LoyaltyEarnRecordExcelWriter(file);
     }
 

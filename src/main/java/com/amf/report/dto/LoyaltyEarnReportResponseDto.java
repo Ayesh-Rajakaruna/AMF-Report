@@ -1,4 +1,4 @@
 package com.amf.report.dto;
 
-public record LoyaltyEarnReportResponseDto(String fileName, String filePath, int recordCount) {
+public record LoyaltyEarnReportResponseDto(String environment, String fileName, String filePath, int recordCount) {
 }

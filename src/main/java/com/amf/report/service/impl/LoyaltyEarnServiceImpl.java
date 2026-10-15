@@ -1,5 +1,7 @@
 package com.amf.report.service.impl;
 
+import com.amf.report.config.LoyaltyApiProperties;
+import com.amf.report.constant.ReportEnvironment;
 import com.amf.report.dto.CharacteristicDto;
 import com.amf.report.dto.LoyaltyAccountBalanceDto;
 import com.amf.report.dto.LoyaltyEarnData;
@@ -15,7 +17,6 @@ import com.amf.report.service.LoyaltyEarnService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -37,28 +38,20 @@ import static com.amf.report.constant.AppConstants.*;
 public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     private final HttpService httpService;
     private final ExcelService excelService;
-
-    @Value("${loyalty.api.loyalty-earn-url}")
-    private String loyaltyEarnUrl;
-
-    @Value("${loyalty.api.loyalty-rule-url}")
-    private String loyaltyRuleUrl;
-
-    @Value("${loyalty.api.loyalty-program-member-url}")
-    private String loyaltyProgramMemberUrl;
-
-    @Value("${loyalty.api.loyalty-account-balance-url}")
-    private String loyaltyAccountBalanceUrl;
+    private final LoyaltyApiProperties apiProperties;
 
     @Override
-    public LoyaltyEarnReportResponseDto syncLoyaltyEarnsFromApi() {
-        List<LoyaltyEarnData> loyaltyEarns = loadMonthlyOrUpfrontEarns();
+    public LoyaltyEarnReportResponseDto syncLoyaltyEarnsFromApi(String environment) {
+        ReportEnvironment env = ReportEnvironment.fromValue(environment);
+        log.info("Generating loyaltyEarn report: environment={}", env.getLabel());
 
-        Map<String, String> policyNameById = loadPolicyNames();
-        Map<String, Pair<String, String>> memberById = loadMembers();
-        Map<String, BigDecimal> totalBalanceByCidn = loadTotalBalances();
+        List<LoyaltyEarnData> loyaltyEarns = loadMonthlyOrUpfrontEarns(env);
 
-        try (LoyaltyEarnRecordExcelWriter excelWriter = excelService.openLoyaltyEarnRecordWriter()) {
+        Map<String, String> policyNameById = loadPolicyNames(env);
+        Map<String, Pair<String, String>> memberById = loadMembers(env);
+        Map<String, BigDecimal> totalBalanceByCidn = loadTotalBalances(env);
+
+        try (LoyaltyEarnRecordExcelWriter excelWriter = excelService.openLoyaltyEarnRecordWriter(env)) {
             for (int from = 0; from < loyaltyEarns.size(); from += SYNC_BATCH_SIZE) {
                 int to = Math.min(from + SYNC_BATCH_SIZE, loyaltyEarns.size());
                 List<LoyaltyEarnRecord> batch = loyaltyEarns.subList(from, to).stream()
@@ -69,12 +62,13 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
             }
             Path file = excelWriter.finish();
             return new LoyaltyEarnReportResponseDto(
+                    env.getLabel(),
                     file.getFileName().toString(), file.toAbsolutePath().toString(), excelWriter.getRecordCount());
         }
     }
 
-    List<LoyaltyEarnData> loadMonthlyOrUpfrontEarns() {
-        List<LoyaltyEarnDto> response = fetchList(loyaltyEarnUrl, LOYALTY_EARN_LIST);
+    List<LoyaltyEarnData> loadMonthlyOrUpfrontEarns(ReportEnvironment env) {
+        List<LoyaltyEarnDto> response = fetchList(apiProperties.loyaltyEarnUrl(env), LOYALTY_EARN_LIST);
         List<LoyaltyEarnData> loyaltyEarns = toMonthlyOrUpfrontEarns(response);
         log.info("loyaltyEarn API returned {} record(s); {} are Monthly/Upfront",
                 response.size(), loyaltyEarns.size());
@@ -107,9 +101,9 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
                 .build();
     }
 
-    Map<String, String> loadPolicyNames() {
+    Map<String, String> loadPolicyNames(ReportEnvironment env) {
         Map<String, String> policyNameById = new HashMap<>();
-        for (LoyaltyRuleDto rule : fetchList(loyaltyRuleUrl, LOYALTY_RULE_LIST)) {
+        for (LoyaltyRuleDto rule : fetchList(apiProperties.loyaltyRuleUrl(env), LOYALTY_RULE_LIST)) {
             if (rule != null && rule.getId() != null) {
                 policyNameById.putIfAbsent(rule.getId(), rule.getPolicyName());
             }
@@ -118,9 +112,9 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         return policyNameById;
     }
 
-    Map<String, Pair<String, String>> loadMembers() {
+    Map<String, Pair<String, String>> loadMembers(ReportEnvironment env) {
         Map<String, Pair<String, String>> memberById = new HashMap<>();
-        for (ProgramMemberDto member : fetchList(loyaltyProgramMemberUrl, PROGRAM_MEMBER_LIST)) {
+        for (ProgramMemberDto member : fetchList(apiProperties.loyaltyProgramMemberUrl(env), PROGRAM_MEMBER_LIST)) {
             if (member != null && member.getId() != null) {
                 memberById.putIfAbsent(member.getId(), Pair.of(member.getName(), extractCidn(member)));
             }
@@ -129,9 +123,9 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         return memberById;
     }
 
-    Map<String, BigDecimal> loadTotalBalances() {
+    Map<String, BigDecimal> loadTotalBalances(ReportEnvironment env) {
         Map<String, BigDecimal> totalBalanceByCidn = new HashMap<>();
-        for (LoyaltyAccountBalanceDto balance : fetchList(loyaltyAccountBalanceUrl, ACCOUNT_BALANCE_LIST)) {
+        for (LoyaltyAccountBalanceDto balance : fetchList(apiProperties.loyaltyAccountBalanceUrl(env), ACCOUNT_BALANCE_LIST)) {
             if (balance == null || balance.getRelatedAccount() == null || balance.getAmount() == null
                     || balance.getAmount().getValue() == null
                     || !TOTAL_BALANCE_TYPES.contains(balance.getBalanceType())) {

@@ -7,10 +7,15 @@ spring:
 
 loyalty:
   api:
-    loyalty-earn-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyEarn?usageCharacteristic.value=Upfront&usageCharacteristic.value=Monthly
-    loyalty-rule-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyRule
-    loyalty-program-member-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyProgramMember
-    loyalty-account-balance-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyAccountBalance?balanceType=UpfrontBalanceTotal&balanceType=EarningBalanceTotal&balanceType=ManualCreditBalanceTotal
+    base-urls:
+      DEV: https://dev-orderexpress.08894fb17d.sdpamp.com
+      QA: https://qa-orderexpress.08894fb17d.sdpamp.com
+      PREPROD: https://preprod-api.orderexchange.telstra.com.au
+      PROD: https://prod-api.orderexchange.telstra.com.au
+    loyalty-earn-path: /tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyEarn?usageCharacteristic.value=Upfront&usageCharacteristic.value=Monthly
+    loyalty-rule-path: /tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyRule
+    loyalty-program-member-path: /tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyProgramMember
+    loyalty-account-balance-path: /tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyAccountBalance?balanceType=UpfrontBalanceTotal&balanceType=EarningBalanceTotal&balanceType=ManualCreditBalanceTotal
 
 product-group:
   api:
