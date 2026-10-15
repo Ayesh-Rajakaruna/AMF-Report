@@ -25,4 +25,6 @@ public class LoyaltyEarnRecord {
     private String cidn;
 
     private BigDecimal totalBalance;
+
+    private String agreementName;
 }

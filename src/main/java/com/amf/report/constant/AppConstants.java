@@ -44,8 +44,8 @@ public final class AppConstants {
     public static final int EXCEL_COLUMN_WIDTH = 22 * 256;
 
     public static final List<String> LOYALTY_EARN_RECORD_HEADERS = List.of(
-            "ID", "Plan Contribution", "Earning Type", "Policy Name",
-            "Organization Name", "CIDN", "Total Balance");
+            "ORG_ID", "ORG_NAME", "POLICY_NAME", "AGREEMENT_NAME",
+            "UPFRONT_IND", "PLAN_CONTRIBUTION", "FUND_BALANCE");
 
     public static final ParameterizedTypeReference<List<LoyaltyEarnDto>> LOYALTY_EARN_LIST =
             new ParameterizedTypeReference<>() {};

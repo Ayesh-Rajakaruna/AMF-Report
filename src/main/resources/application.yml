@@ -7,7 +7,7 @@ spring:
 
 loyalty:
   api:
-    loyalty-earn-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyEarn
+    loyalty-earn-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyEarn?usageCharacteristic.value=Upfront&usageCharacteristic.value=Monthly
     loyalty-rule-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyRule
     loyalty-program-member-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyProgramMember
     loyalty-account-balance-url: https://dev-orderexpress.08894fb17d.sdpamp.com/tox-tx-layer-loyalty-mgt/tmf-api/loyalty/v4/loyaltyAccountBalance?balanceType=UpfrontBalanceTotal&balanceType=EarningBalanceTotal&balanceType=ManualCreditBalanceTotal

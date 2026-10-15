@@ -90,12 +90,12 @@ public class LoyaltyEarnRecordExcelWriter implements AutoCloseable {
 
     private void writeRow(Row row, LoyaltyEarnRecord record) {
         int col = 0;
-        setText(row, col++, record.getId());
-        setDecimal(row, col++, record.getPlanContribution());
-        setText(row, col++, record.getEarningType());
-        setText(row, col++, record.getPolicyName());
-        setText(row, col++, record.getOrganizationName());
         setText(row, col++, record.getCidn());
+        setText(row, col++, record.getOrganizationName());
+        setText(row, col++, record.getPolicyName());
+        setText(row, col++, record.getAgreementName());
+        setText(row, col++, record.getEarningType());
+        setDecimal(row, col++, record.getPlanContribution());
         setDecimal(row, col, record.getTotalBalance());
     }
 
