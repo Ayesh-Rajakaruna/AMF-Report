@@ -97,13 +97,14 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         if (earningType == null) {
             return null;
         }
-        return new LoyaltyEarnData(
-                loyaltyEarn.getId(),
-                extractPlanContribution(loyaltyEarn),
-                loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID),
-                extractLoyaltyProgramMemberId(loyaltyEarn),
-                earningType,
-                loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_AGREEMENT_NAME));
+        return LoyaltyEarnData.builder()
+                .id(loyaltyEarn.getId())
+                .planContribution(extractPlanContribution(loyaltyEarn))
+                .policyId(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID))
+                .memberId(extractLoyaltyProgramMemberId(loyaltyEarn))
+                .earningType(earningType)
+                .agreementName(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_AGREEMENT_NAME))
+                .build();
     }
 
     Map<String, String> loadPolicyNames() {

@@ -316,7 +316,13 @@ class LoyaltyEarnServiceImplTest {
                 null));
 
         assertThat(result).containsExactly(
-                new LoyaltyEarnData(monthly.getId(), new BigDecimal("13.5"), "POL-1", "LPM-1", "Monthly",
-                        "Agreement A"));
+                LoyaltyEarnData.builder()
+                        .id(monthly.getId())
+                        .planContribution(new BigDecimal("13.5"))
+                        .policyId("POL-1")
+                        .memberId("LPM-1")
+                        .earningType("Monthly")
+                        .agreementName("Agreement A")
+                        .build());
     }
 }
