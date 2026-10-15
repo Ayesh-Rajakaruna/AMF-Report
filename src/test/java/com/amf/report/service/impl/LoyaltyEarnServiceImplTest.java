@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,6 +83,8 @@ class LoyaltyEarnServiceImplTest {
         when(repository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
     }
 
+    private static final AtomicInteger ID_SEQUENCE = new AtomicInteger();
+
     private static LoyaltyEarnDto loyaltyEarn(String value, String earningType, String policyId, String memberId) {
         List<CharacteristicDto> characteristics = new ArrayList<>();
         characteristics.add(new CharacteristicDto("AddedDate", "21-09-2026"));
@@ -92,6 +95,7 @@ class LoyaltyEarnServiceImplTest {
             characteristics.add(new CharacteristicDto("PolicyId", policyId));
         }
         return LoyaltyEarnDto.builder()
+                .id("LE-" + ID_SEQUENCE.incrementAndGet())
                 .quantity(value == null ? null : new LoyaltyEarnDto.QuantityDto(new BigDecimal(value)))
                 .loyaltyProgramMember(memberId == null ? null : new LoyaltyEarnDto.LoyaltyProgramMemberDto(memberId))
                 .usageCharacteristic(characteristics)
@@ -107,12 +111,15 @@ class LoyaltyEarnServiceImplTest {
 
     @Test
     void sync_mapsPlanContributionAndEarningType() {
-        apiReturns(List.of(loyaltyEarn("13.825570", "Monthly", "POL-1", "LPM-1")));
+        LoyaltyEarnDto earn = loyaltyEarn("13.825570", "Monthly", "POL-1", "LPM-1");
+        apiReturns(List.of(earn));
         saveAllReturnsInput();
 
         List<LoyaltyEarnResponseDto> result = service.syncLoyaltyEarnsFromApi();
 
         LoyaltyEarnRecord saved = captureSaved().get(0);
+        assertThat(saved.getId()).isEqualTo(earn.getId());
+        assertThat(result.get(0).getId()).isEqualTo(earn.getId());
         assertThat(saved.getPlanContribution()).isEqualByComparingTo("13.825570");
         assertThat(saved.getEarningType()).isEqualTo("Monthly");
         assertThat(result.get(0).getEarningType()).isEqualTo("Monthly");
@@ -277,12 +284,17 @@ class LoyaltyEarnServiceImplTest {
 
     @Test
     void toMonthlyOrUpfrontEarns_keepsOnlyNeededFields() {
+        LoyaltyEarnDto monthly = loyaltyEarn("13.5", "Monthly", "POL-1", "LPM-1");
+        LoyaltyEarnDto withoutId = loyaltyEarn("9", "Upfront", "POL-3", "LPM-3");
+        withoutId.setId(null);
+
         List<LoyaltyEarnData> result = service.toMonthlyOrUpfrontEarns(Arrays.asList(
-                loyaltyEarn("13.5", "Monthly", "POL-1", "LPM-1"),
+                monthly,
                 loyaltyEarn("7", "ManualCredit", "POL-2", "LPM-2"),
+                withoutId,
                 null));
 
         assertThat(result).containsExactly(
-                new LoyaltyEarnData(new BigDecimal("13.5"), "POL-1", "LPM-1", "Monthly"));
+                new LoyaltyEarnData(monthly.getId(), new BigDecimal("13.5"), "POL-1", "LPM-1", "Monthly"));
     }
 }

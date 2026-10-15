@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
 @Builder
 public class LoyaltyEarnRecord {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id", length = 100)
+    private String id;
 
     @Column(name = "plan_contribution", precision = 19, scale = 2)
     private BigDecimal planContribution;

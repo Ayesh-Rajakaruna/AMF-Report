@@ -94,11 +94,15 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     }
 
     private LoyaltyEarnData toLoyaltyEarnData(LoyaltyEarnDto loyaltyEarn) {
+        if (!StringUtils.hasText(loyaltyEarn.getId())) {
+            return null;
+        }
         String earningType = normalizeEarningType(loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_EARNING_TYPE));
         if (earningType == null) {
             return null;
         }
         return new LoyaltyEarnData(
+                loyaltyEarn.getId(),
                 extractPlanContribution(loyaltyEarn),
                 loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID),
                 extractLoyaltyProgramMemberId(loyaltyEarn),
@@ -174,6 +178,7 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
         BigDecimal totalBalance = cidn == null ? null : totalBalanceByCidn.get(cidn.trim());
 
         return LoyaltyEarnRecord.builder()
+                .id(loyaltyEarn.id())
                 .planContribution(loyaltyEarn.planContribution())
                 .earningType(loyaltyEarn.earningType())
                 .policyName(policyId == null ? null : policyNameById.get(policyId))
