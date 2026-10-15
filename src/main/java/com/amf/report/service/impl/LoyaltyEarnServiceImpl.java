@@ -9,6 +9,7 @@ import com.amf.report.dto.LoyaltyRuleDto;
 import com.amf.report.dto.ProgramMemberDto;
 import com.amf.report.entity.LoyaltyEarnRecord;
 import com.amf.report.repository.LoyaltyEarnRecordRepository;
+import com.amf.report.service.ExcelService;
 import com.amf.report.service.HttpService;
 import com.amf.report.service.LoyaltyEarnService;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ import static com.amf.report.constant.AppConstants.TOTAL_BALANCE_TYPES;
 public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
     private final LoyaltyEarnRecordRepository loyaltyEarnRecordRepository;
     private final HttpService httpService;
+    private final ExcelService excelService;
     private final ModelMapper modelMapper;
 
     @Value("${loyalty.api.loyalty-earn-url}")
@@ -74,6 +76,7 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
 
         List<LoyaltyEarnRecord> saved = loyaltyEarnRecordRepository.saveAll(records);
         log.info("Saved {} loyaltyEarn record(s) to MySQL", saved.size());
+        excelService.writeLoyaltyEarnRecords(saved);
         return saved.stream().map(this::toResponse).toList();
     }
 

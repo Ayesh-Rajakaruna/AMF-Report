@@ -1,0 +1,82 @@
+package com.amf.report.service.impl;
+
+import com.amf.report.entity.LoyaltyEarnRecord;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class ExcelServiceImplTest {
+
+    @TempDir
+    Path tempDir;
+
+    @Test
+    void writeLoyaltyEarnRecords_writesHeaderAndRows() throws Exception {
+        Path outputDir = tempDir.resolve("reports");
+        ExcelServiceImpl excelService = new ExcelServiceImpl(outputDir.toString());
+        LoyaltyEarnRecord record = LoyaltyEarnRecord.builder()
+                .id("LE-1")
+                .planContribution(new BigDecimal("13.825570"))
+                .earningType("Monthly")
+                .policyName("Gold Policy")
+                .organizationName("Acme Pty Ltd")
+                .cidn("6781234778")
+                .totalBalance(new BigDecimal("154670.155"))
+                .createdAt(LocalDateTime.of(2026, 10, 15, 9, 40))
+                .build();
+        LoyaltyEarnRecord sparse = LoyaltyEarnRecord.builder().id("LE-2").earningType("Upfront").build();
+
+        Path file = excelService.writeLoyaltyEarnRecords(List.of(record, sparse));
+
+        assertThat(file).exists();
+        assertThat(file.getParent()).isEqualTo(outputDir);
+        assertThat(file.getFileName().toString()).startsWith("LoyaltyEarnRecord_").endsWith(".xlsx");
+
+        try (InputStream in = Files.newInputStream(file); XSSFWorkbook workbook = new XSSFWorkbook(in)) {
+            Sheet sheet = workbook.getSheet("LoyaltyEarnRecord");
+            assertThat(sheet).isNotNull();
+            assertThat(sheet.getLastRowNum()).isEqualTo(2);
+
+            Row header = sheet.getRow(0);
+            assertThat(header.getCell(0).getStringCellValue()).isEqualTo("ID");
+            assertThat(header.getCell(7).getStringCellValue()).isEqualTo("Created At");
+
+            Row row = sheet.getRow(1);
+            assertThat(row.getCell(0).getStringCellValue()).isEqualTo("LE-1");
+            assertThat(row.getCell(1).getNumericCellValue()).isEqualTo(13.82557);
+            assertThat(row.getCell(2).getStringCellValue()).isEqualTo("Monthly");
+            assertThat(row.getCell(3).getStringCellValue()).isEqualTo("Gold Policy");
+            assertThat(row.getCell(4).getStringCellValue()).isEqualTo("Acme Pty Ltd");
+            assertThat(row.getCell(5).getStringCellValue()).isEqualTo("6781234778");
+            assertThat(row.getCell(6).getNumericCellValue()).isEqualTo(154670.155);
+            assertThat(row.getCell(7).getLocalDateTimeCellValue()).isEqualTo(LocalDateTime.of(2026, 10, 15, 9, 40));
+
+            Row sparseRow = sheet.getRow(2);
+            assertThat(sparseRow.getCell(0).getStringCellValue()).isEqualTo("LE-2");
+            assertThat(sparseRow.getCell(1)).isNull();
+            assertThat(sparseRow.getCell(2).getStringCellValue()).isEqualTo("Upfront");
+        }
+    }
+
+    @Test
+    void writeLoyaltyEarnRecords_emptyList_writesHeaderOnly() throws Exception {
+        ExcelServiceImpl excelService = new ExcelServiceImpl(tempDir.toString());
+
+        Path file = excelService.writeLoyaltyEarnRecords(List.of());
+
+        try (InputStream in = Files.newInputStream(file); XSSFWorkbook workbook = new XSSFWorkbook(in)) {
+            assertThat(workbook.getSheet("LoyaltyEarnRecord").getLastRowNum()).isZero();
+        }
+    }
+}

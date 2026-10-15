@@ -14,4 +14,10 @@ public class GlobalExceptionHandler {
         log.error("Outbound HTTP call failed", ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.getMessage());
     }
+
+    @ExceptionHandler(ExcelGenerationException.class)
+    public ProblemDetail handleExcelGenerationException(ExcelGenerationException ex) {
+        log.error("Excel generation failed", ex);
+        return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
 }

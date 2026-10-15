@@ -9,6 +9,7 @@ import com.amf.report.dto.ProgramMemberDto;
 import com.amf.report.dto.LoyaltyEarnResponseDto;
 import com.amf.report.entity.LoyaltyEarnRecord;
 import com.amf.report.repository.LoyaltyEarnRecordRepository;
+import com.amf.report.service.ExcelService;
 import com.amf.report.service.HttpService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,9 @@ class LoyaltyEarnServiceImplTest {
 
     @Mock
     private HttpService httpService;
+
+    @Mock
+    private ExcelService excelService;
 
     @Spy
     private ModelMapper modelMapper = new ModelMapper();
@@ -296,5 +300,16 @@ class LoyaltyEarnServiceImplTest {
 
         assertThat(result).containsExactly(
                 new LoyaltyEarnData(monthly.getId(), new BigDecimal("13.5"), "POL-1", "LPM-1", "Monthly"));
+    }
+
+    @Test
+    void sync_writesSavedRecordsToExcel() {
+        apiReturns(List.of(loyaltyEarn("10", "Monthly", "POL-1", "LPM-1")));
+        saveAllReturnsInput();
+
+        service.syncLoyaltyEarnsFromApi();
+
+        List<LoyaltyEarnRecord> saved = captureSaved();
+        verify(excelService).writeLoyaltyEarnRecords(saved);
     }
 }
