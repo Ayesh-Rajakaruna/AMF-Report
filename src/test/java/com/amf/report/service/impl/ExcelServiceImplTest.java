@@ -26,16 +26,16 @@ class ExcelServiceImplTest {
         Path outputDir = tempDir.resolve("reports");
         ExcelServiceImpl excelService = new ExcelServiceImpl(outputDir.toString());
         LoyaltyEarnRecord full = LoyaltyEarnRecord.builder()
-                .id("LE-1")
-                .planContribution(new BigDecimal("13.825570"))
-                .earningType("Monthly")
-                .policyName("Gold Policy")
-                .organizationName("Acme Pty Ltd")
                 .cidn("6781234778")
+                .organizationName("Acme Pty Ltd")
+                .policyName("Gold Policy")
+                .agreementName("Agreement A")
+                .earningType("Monthly")
+                .planContribution(new BigDecimal("13.825570"))
                 .totalBalance(new BigDecimal("154670.155"))
                 .build();
-        LoyaltyEarnRecord sparse = LoyaltyEarnRecord.builder().id("LE-2").earningType("Upfront").build();
-        LoyaltyEarnRecord third = LoyaltyEarnRecord.builder().id("LE-3").earningType("Monthly").build();
+        LoyaltyEarnRecord sparse = LoyaltyEarnRecord.builder().cidn("1111111111").earningType("Upfront").build();
+        LoyaltyEarnRecord third = LoyaltyEarnRecord.builder().cidn("2222222222").earningType("Monthly").build();
 
         Path file;
         try (LoyaltyEarnRecordExcelWriter writer = excelService.openLoyaltyEarnRecordWriter()) {
@@ -55,24 +55,26 @@ class ExcelServiceImplTest {
             assertThat(sheet.getLastRowNum()).isEqualTo(3);
 
             Row header = sheet.getRow(0);
-            assertThat(header.getCell(0).getStringCellValue()).isEqualTo("ID");
-            assertThat(header.getCell(6).getStringCellValue()).isEqualTo("Total Balance");
+            assertThat(header.getCell(0).getStringCellValue()).isEqualTo("ORG_ID");
+            assertThat(header.getCell(3).getStringCellValue()).isEqualTo("AGREEMENT_NAME");
+            assertThat(header.getCell(6).getStringCellValue()).isEqualTo("FUND_BALANCE");
             assertThat(header.getCell(7)).isNull();
 
             Row row = sheet.getRow(1);
-            assertThat(row.getCell(0).getStringCellValue()).isEqualTo("LE-1");
-            assertThat(row.getCell(1).getNumericCellValue()).isEqualTo(13.82557);
-            assertThat(row.getCell(2).getStringCellValue()).isEqualTo("Monthly");
-            assertThat(row.getCell(3).getStringCellValue()).isEqualTo("Gold Policy");
-            assertThat(row.getCell(4).getStringCellValue()).isEqualTo("Acme Pty Ltd");
-            assertThat(row.getCell(5).getStringCellValue()).isEqualTo("6781234778");
+            assertThat(row.getCell(0).getStringCellValue()).isEqualTo("6781234778");
+            assertThat(row.getCell(1).getStringCellValue()).isEqualTo("Acme Pty Ltd");
+            assertThat(row.getCell(2).getStringCellValue()).isEqualTo("Gold Policy");
+            assertThat(row.getCell(3).getStringCellValue()).isEqualTo("Agreement A");
+            assertThat(row.getCell(4).getStringCellValue()).isEqualTo("Monthly");
+            assertThat(row.getCell(5).getNumericCellValue()).isEqualTo(13.82557);
             assertThat(row.getCell(6).getNumericCellValue()).isEqualTo(154670.155);
 
             Row sparseRow = sheet.getRow(2);
-            assertThat(sparseRow.getCell(0).getStringCellValue()).isEqualTo("LE-2");
+            assertThat(sparseRow.getCell(0).getStringCellValue()).isEqualTo("1111111111");
             assertThat(sparseRow.getCell(1)).isNull();
+            assertThat(sparseRow.getCell(3)).isNull();
 
-            assertThat(sheet.getRow(3).getCell(0).getStringCellValue()).isEqualTo("LE-3");
+            assertThat(sheet.getRow(3).getCell(0).getStringCellValue()).isEqualTo("2222222222");
         }
     }
 

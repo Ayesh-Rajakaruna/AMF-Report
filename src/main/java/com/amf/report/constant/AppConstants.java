@@ -19,6 +19,7 @@ public final class AppConstants {
 
     public static final String CHARACTERISTIC_EARNING_TYPE = "EarningType";
     public static final String CHARACTERISTIC_POLICY_ID = "PolicyId";
+    public static final String CHARACTERISTIC_AGREEMENT_NAME = "AgreementName";
 
     public static final String EARNING_TYPE_MONTHLY = "Monthly";
     public static final String EARNING_TYPE_UPFRONT = "Upfront";

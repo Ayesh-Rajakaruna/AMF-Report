@@ -83,6 +83,11 @@ class LoyaltyEarnServiceImplTest {
     }
 
     private static LoyaltyEarnDto loyaltyEarn(String value, String earningType, String policyId, String memberId) {
+        return loyaltyEarn(value, earningType, policyId, memberId, null);
+    }
+
+    private static LoyaltyEarnDto loyaltyEarn(String value, String earningType, String policyId, String memberId,
+                                              String agreementName) {
         List<CharacteristicDto> characteristics = new ArrayList<>();
         characteristics.add(new CharacteristicDto("AddedDate", "21-09-2026"));
         if (earningType != null) {
@@ -90,6 +95,9 @@ class LoyaltyEarnServiceImplTest {
         }
         if (policyId != null) {
             characteristics.add(new CharacteristicDto("PolicyId", policyId));
+        }
+        if (agreementName != null) {
+            characteristics.add(new CharacteristicDto("AgreementName", agreementName));
         }
         return LoyaltyEarnDto.builder()
                 .id("LE-" + ID_SEQUENCE.incrementAndGet())
@@ -123,16 +131,16 @@ class LoyaltyEarnServiceImplTest {
     }
 
     @Test
-    void sync_mapsIdPlanContributionAndEarningType() {
-        LoyaltyEarnDto earn = loyaltyEarn("13.825570", "Monthly", "POL-1", "LPM-1");
+    void sync_mapsPlanContributionEarningTypeAndAgreementName() {
+        LoyaltyEarnDto earn = loyaltyEarn("13.825570", "Upfront", "POL-1", "LPM-1", "Agreement A");
         apiReturns(List.of(earn));
 
         service.syncLoyaltyEarnsFromApi();
 
         LoyaltyEarnRecord written = captureWritten().get(0);
-        assertThat(written.getId()).isEqualTo(earn.getId());
         assertThat(written.getPlanContribution()).isEqualByComparingTo("13.825570");
-        assertThat(written.getEarningType()).isEqualTo("Monthly");
+        assertThat(written.getEarningType()).isEqualTo("Upfront");
+        assertThat(written.getAgreementName()).isEqualTo("Agreement A");
     }
 
     @Test
@@ -169,6 +177,7 @@ class LoyaltyEarnServiceImplTest {
         assertThat(written.getPlanContribution()).isNull();
         assertThat(written.getPolicyName()).isNull();
         assertThat(written.getOrganizationName()).isNull();
+        assertThat(written.getAgreementName()).isNull();
         assertThat(written.getEarningType()).isEqualTo("Upfront");
     }
 
@@ -296,7 +305,7 @@ class LoyaltyEarnServiceImplTest {
 
     @Test
     void toMonthlyOrUpfrontEarns_keepsOnlyNeededFields() {
-        LoyaltyEarnDto monthly = loyaltyEarn("13.5", "Monthly", "POL-1", "LPM-1");
+        LoyaltyEarnDto monthly = loyaltyEarn("13.5", "Monthly", "POL-1", "LPM-1", "Agreement A");
         LoyaltyEarnDto withoutId = loyaltyEarn("9", "Upfront", "POL-3", "LPM-3");
         withoutId.setId(null);
 
@@ -307,6 +316,7 @@ class LoyaltyEarnServiceImplTest {
                 null));
 
         assertThat(result).containsExactly(
-                new LoyaltyEarnData(monthly.getId(), new BigDecimal("13.5"), "POL-1", "LPM-1", "Monthly"));
+                new LoyaltyEarnData(monthly.getId(), new BigDecimal("13.5"), "POL-1", "LPM-1", "Monthly",
+                        "Agreement A"));
     }
 }

@@ -102,7 +102,8 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
                 extractPlanContribution(loyaltyEarn),
                 loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_POLICY_ID),
                 extractLoyaltyProgramMemberId(loyaltyEarn),
-                earningType);
+                earningType,
+                loyaltyEarn.getUsageCharacteristicValue(CHARACTERISTIC_AGREEMENT_NAME));
     }
 
     Map<String, String> loadPolicyNames() {
@@ -177,6 +178,7 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
                 .planContribution(loyaltyEarn.planContribution())
                 .earningType(loyaltyEarn.earningType())
                 .policyName(policyId == null ? null : policyNameById.get(policyId))
+                .agreementName(loyaltyEarn.agreementName())
                 .organizationName(member == null ? null : member.getLeft())
                 .cidn(cidn)
                 .totalBalance(totalBalance)
