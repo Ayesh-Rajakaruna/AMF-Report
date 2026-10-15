@@ -28,4 +28,4 @@ loyalty:
 # ---- Outbound HTTP proxy (host/port/username are in AppConstants) ----
 http:
   proxy:
-    password: ${HTTP_PROXY_PASSWORD}
+    password: 15Wimantha@1997

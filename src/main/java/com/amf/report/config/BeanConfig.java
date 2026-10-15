@@ -20,7 +20,6 @@ import static com.amf.report.constant.AppConstants.PROXY_USERNAME;
 @Configuration
 public class BeanConfig {
 
-    /** Proxy password comes from the HTTP_PROXY_PASSWORD environment variable - never hardcode it. */
     @Value("${http.proxy.password}")
     private String proxyPassword;
 

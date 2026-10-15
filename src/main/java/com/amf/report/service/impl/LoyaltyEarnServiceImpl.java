@@ -125,20 +125,15 @@ public class LoyaltyEarnServiceImpl implements LoyaltyEarnService {
                 continue;
             }
             BigDecimal amount = balance.getAmount().getValue();
-            addTo(totalByAccount, balance.getRelatedAccount().getId(), amount);
             String accountName = balance.getRelatedAccount().getName();
-            if (!Objects.equals(accountName, balance.getRelatedAccount().getId())) {
-                addTo(totalByAccount, accountName, amount);
+            BigDecimal totalAmount = totalByAccount.get(accountName);
+            BigDecimal sumOfAmount = amount;
+            if(totalAmount != null){
+                sumOfAmount = sumOfAmount + totalAmount
             }
         }
         log.info("Loaded total balance(s) for {} account key(s)", totalByAccount.size());
         return totalByAccount;
-    }
-
-    private static void addTo(Map<String, BigDecimal> totals, String key, BigDecimal amount) {
-        if (StringUtils.hasText(key)) {
-            totals.merge(key, amount, BigDecimal::add);
-        }
     }
 
     /** CIDN from the member's "CIDN" characteristic, falling back to the first characteristic value. */
